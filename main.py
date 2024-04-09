@@ -19,6 +19,7 @@ import en_core_web_md
 
 nlp = en_core_web_md.load()
 
+# Sample text from Gemini -- create 100 sentences using the word "dancing" #only produced 50
 doc = nlp(
     '''The fireflies danced in the twilight, creating a mesmerizing spectacle. 
     The salsa music was so infectious, everyone ended up dancing.
