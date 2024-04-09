@@ -16,8 +16,12 @@ Program should work as follows:
 Sample question with "dancing" as the inputted word:
 
 "Which of these sentences is correct?"
+
 a) The criminal danced a man
+
 b) I dance off the counter
+
 c) The monkey was dancing a banana
+
 *d) He dances the tango*
     
