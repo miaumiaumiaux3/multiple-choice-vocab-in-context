@@ -78,9 +78,9 @@ The rhythmic pounding of the drums echoed through the jungle, a call to the anci
 
 
 #print([[w._.lemma(), getAllLemmas(w.text, upos=None)] for w in doc])
-pos_count = {}
-word_pos_count = {}
 word = "dancing" #needs to be able to work for any word in any form
+
+
 print(getAllLemmas(word, upos = None))
 word_lemmas = list(getAllLemmas(word, upos = None).values())
 print(word_lemmas, "first entry: ", word_lemmas[0][0])
@@ -88,6 +88,30 @@ word_inflections = getAllInflections(word_lemmas[0][0], upos=None) #doesn't work
 print(word_inflections)
 word_inflection_list = list(flatten(list(word_inflections.values())))
 print(word_inflection_list)
+
+pos_count = {}
+word_pos_count = {}
+
+# Count the POS tags in the text
+for w in doc:
+    if w.tag_ in pos_count.keys():
+       pos_count[w.tag_] += 1
+    else:
+       pos_count[w.tag_] = 1
+    #print(w.lemma_, w.tag_)
+    if w.lemma_ in word_inflection_list: #count instances of inflections of the word
+       if w.tag_ in word_pos_count.keys():
+            word_pos_count[w.tag_] += 1
+       else:
+            word_pos_count[w.tag_] = 1
+
+print(pos_count) #{'DT': 107, 'NNS': 48, 'VBD': 61, 'IN': 76, 'NN': 138, ',': 42, 'VBG': 26, 'JJ': 54, '.': 50, '_SP': 49, 'RB': 18, 'RP': 3, 'PRP': 20, 'TO': 9, 'VB': 14, 'PRP$': 23, 'POS': 5, 'NNP': 1, 'VBN': 10, 'CC': 9, 'WDT': 2, 'CD': 3, 'MD': 1}
+print(word_pos_count) #{'VBD': 20, 'VBG': 8, 'VB': 2, 'NN': 17} #for dance, dancing, dances, danced
+
+#problem: "dancer" is not included in the list of inflections for "dancing", and of course neither is "breakdancer" -- should these be included? Is the lemma search too restrictive or should the sample sentences be?
+#%%
+
+#We can't capture dancer/breakdancer etc, so when we generate a sentences, we'll make sure that it includes one of our inflections, and if not, generate a new sentence -- I think that's the best we can do
 
 word1 = nlp("She took a dance class.")
 word2 = nlp("They're dancing like crazy at the club.")
@@ -111,24 +135,3 @@ print(word1[3], "<->", word2[2], word1[3].similarity(word2[2]))
 # tokens = nlp("dance dancing dances danced breakdancer dancer")
 # for token in tokens:
 #     print(token.text, token.has_vector, token.vector_norm, token.is_oov)
-
-# Count the POS tags in the text
-for w in doc:
-    if w.tag_ in pos_count.keys():
-       pos_count[w.tag_] += 1
-    else:
-       pos_count[w.tag_] = 1
-    #print(w.lemma_, w.tag_)
-    if w.lemma_ in word_inflection_list: #count instances of inflections of the word
-       if w.tag_ in word_pos_count.keys():
-            word_pos_count[w.tag_] += 1
-       else:
-            word_pos_count[w.tag_] = 1
-
-print(pos_count) #{'DT': 107, 'NNS': 48, 'VBD': 61, 'IN': 76, 'NN': 138, ',': 42, 'VBG': 26, 'JJ': 54, '.': 50, '_SP': 49, 'RB': 18, 'RP': 3, 'PRP': 20, 'TO': 9, 'VB': 14, 'PRP$': 23, 'POS': 5, 'NNP': 1, 'VBN': 10, 'CC': 9, 'WDT': 2, 'CD': 3, 'MD': 1}
-print(word_pos_count) #{'VBD': 20, 'VBG': 8, 'VB': 2, 'NN': 17} #for dance, dancing, dances, danced
-
-#problem: "dancer" is not included in the list of inflections for "dancing", and of course neither is "breakdancer" -- should these be included? Is the lemma search too restrictive or should the sample sentences be?
-#%%
-
-#We can't capture dancer/breakdancer etc, so when we generate a sentences, we'll make sure that it includes one of our inflections, and if not, generate a new sentence -- I think that's the best we can do

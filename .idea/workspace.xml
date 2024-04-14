@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="renamed file and testing to see if we can get the github preview to work">
-      <change afterPath="$PROJECT_DIR$/inflextion_intersection.ipynb" afterDir="false" />
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="formatting again">
+      <change afterPath="$PROJECT_DIR$/inflection_intersection.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample_sentence_generation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/sample_sentence_generation.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,6 +103,9 @@
     <MESSAGE value="Attempting to use huggingface pipelines to generate sentences from a command prompt. It's a battle that we haven't won yet x_x" />
     <MESSAGE value="ok, comparing multiple models for both polish and english sentence generation and I think we have our current winners. I'm suddenly a huge fan of quantization" />
     <MESSAGE value="renamed file and testing to see if we can get the github preview to work" />
-    <option name="LAST_COMMIT_MESSAGE" value="renamed file and testing to see if we can get the github preview to work" />
+    <MESSAGE value="ok cool, github preview only works if I clear all the outputs, but well... at least it works and I can put sample outputs in markdowns anyways so whatevs" />
+    <MESSAGE value="formatting" />
+    <MESSAGE value="formatting again" />
+    <option name="LAST_COMMIT_MESSAGE" value="formatting again" />
   </component>
 </project>
