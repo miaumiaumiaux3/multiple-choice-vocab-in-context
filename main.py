@@ -87,6 +87,6 @@ print(word, inflected_word, word_index, word_pos, word_tag)
 
 # Search for words in the dictionary with the same POS that are very dissimilar to the target word
 
-
+###Can we do it randomly? Or do we need to copy the entire massive dictionary and add data to each entry?###
 
 
