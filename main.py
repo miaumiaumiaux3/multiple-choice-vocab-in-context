@@ -1,4 +1,7 @@
-
+# pip install -U spacy #to get spacy
+# pip install lemminflect #to get lemmainflect -> eng only (even pyinflect recommends using lemminflect instead)
+# python -m spacy download en_core_web_md ##md size is minimum that has vectors for words
+# python -m spacy download pl_core_news_md
 
 import spacy
 import lemminflect
@@ -86,13 +89,37 @@ print(word_inflections)
 word_inflection_list = list(flatten(list(word_inflections.values())))
 print(word_inflection_list)
 
+word1 = nlp("She took a dance class.")
+word2 = nlp("They're dancing like crazy at the club.")
+print(word1[3], "<->", word2[2], word1[3].similarity(word2[2]))
+#dance <-> dance 1.0
+#dance <-> dancing 0.8363789916038513
+#dancing <-> dances 0.8118761362806426
+#dances <-> dance 0.869343203002707
+#dance <-> danced 0.7878954825468811
+#dance <-> dancer 0.7199643863266643 #at least it's appropriately high
+#dance <-> breakdancer 0.3378131986121241 #oof...
+#dancer <-> breakdancer 0.17645725682106514 #HOW?! o_o
+#break <-> breakdancer 0.4872989887741418 #that's at least sane
+#dance <-> tango 1.000000079040031
+#dance <-> waltz 0.40894623727215057
+#dance <-> walk 0.26834783843045323
+#run <-> walk 0.5648937353772958
+#running <-> walking 0.668782694389761
+#running <-> walk 0.4114890311601812 #worth comparing lemmas, then...
+
+# tokens = nlp("dance dancing dances danced breakdancer dancer")
+# for token in tokens:
+#     print(token.text, token.has_vector, token.vector_norm, token.is_oov)
+
+# Count the POS tags in the text
 for w in doc:
     if w.tag_ in pos_count.keys():
        pos_count[w.tag_] += 1
     else:
        pos_count[w.tag_] = 1
     #print(w.lemma_, w.tag_)
-    if w.lemma_ in word_inflection_list:
+    if w.lemma_ in word_inflection_list: #count instances of inflections of the word
        if w.tag_ in word_pos_count.keys():
             word_pos_count[w.tag_] += 1
        else:
@@ -102,3 +129,6 @@ print(pos_count) #{'DT': 107, 'NNS': 48, 'VBD': 61, 'IN': 76, 'NN': 138, ',': 42
 print(word_pos_count) #{'VBD': 20, 'VBG': 8, 'VB': 2, 'NN': 17} #for dance, dancing, dances, danced
 
 #problem: "dancer" is not included in the list of inflections for "dancing", and of course neither is "breakdancer" -- should these be included? Is the lemma search too restrictive or should the sample sentences be?
+#%%
+
+#We can't capture dancer/breakdancer etc, so when we generate a sentences, we'll make sure that it includes one of our inflections, and if not, generate a new sentence -- I think that's the best we can do
