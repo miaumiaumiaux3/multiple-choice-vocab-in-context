@@ -77,36 +77,33 @@ def insert_words_into_db(query_list):
     print(f"Inserted and committed {len(query_list)} rows into db.\nLast entry was: {query_list[-1]}")
 
 
-def build_query(word_doc, lem, ppos, OOV):
+def build_query(word_doc, lem, ppos, OOV, hasvec):
     '''Build the query to insert a word into the database'''
     #convert lem and ppos to strings surrounded by '' for SQL, or NULL if they are None
-    if lem:
-        lem = f"'{lem}'"
-    else:
-        lem = 'NULL'
-    if ppos:
-        ppos = f"'{ppos}'"
-    else:
-        ppos = 'NULL'
+    lem = f"'{lem}'" if lem else 'NULL'
+    ppos = f"'{ppos}'" if ppos else 'NULL'
 
-    query = f'''INSERT INTO {language}Dictionary (word, lemma, ppos, isOOV) VALUES ('{word_doc.text}', {lem}, {ppos}, {OOV});'''
-    #print(f"Created query for: {word_doc.text}, {lem}, {ppos}, {OOV}") #effectively a loading screen to show all inserts for funsies/debugging
+    query = f'''INSERT INTO {language}Dictionary (word, lemma, ppos, isOOV, hasVector) VALUES ('{word_doc.text}', {lem}, {ppos}, {OOV}, {hasvec});'''
+    #print(f"Created query for: {word_doc.text}, {lem}, {ppos}, {OOV}, {hasVector}") #effectively a loading screen to show all inserts for funsies/debugging
     return query
 
 
 def insert_dictionary_into_db(wordlist, language):
     '''Insert the entire dictionary into the database'''
     batch_count = 0
+    query_list = []
     if language == 'English':
         nlp = spacy.load('en_core_web_md')
-        query_list = []
         for word in wordlist:
             word_doc = nlp(word)
+            hasvec = 1 if word_doc.has_vector else 0
             #lem = word_doc.lemma_ #should work for any language in spacy, but we need to do an OOV lemminflect check
             OOV = 0
             ppos = None
             main_lem = None
             lems = list(getAllLemmas(word, upos = None).values())
+
+            #if no lemmas, then it's OOV and our work is done, if there are, we grab the first one and create the ppos
             if not lems:
                 OOV = 1
             else:
@@ -118,20 +115,20 @@ def insert_dictionary_into_db(wordlist, language):
                 main_lem = None
 
             #build query and add to list
-            query_list.append(build_query(word_doc, main_lem, ppos, OOV))
+            query_list.append(build_query(word_doc, main_lem, ppos, OOV, hasvec))
 
             if len(query_list) == 1000 or word == wordlist[-1]: #batch insert every 1000 queries, or if it's the last word
-                insert_words_into_db(query_list) #insert fully built entry into database
+                insert_words_into_db(query_list) #insert fully built entries into database
                 query_list = [] #reset query list
                 batch_count += 1
                 print(f"----->{batch_count} / {batches} batches complete<-----")
                 continue
 
-    elif language == 'Polish':
-        nlp = spacy.load('pl_core_news_md')
-        for word in wordlist:
-            word_doc = nlp(word)
-            lem = word_doc.lemma_
+    # elif language == 'Polish':
+    #     nlp = spacy.load('pl_core_news_md')
+    #     for word in wordlist:
+    #         word_doc = nlp(word)
+    #         lem = word_doc.lemma_
     else:
         print('Language not supported')
         exit()
@@ -158,10 +155,11 @@ try:
         word VARCHAR({max_value}) PRIMARY KEY,
         lemma VARCHAR({max_value}),
         ppos VARCHAR(6),
-        isOOV INTEGER
+        isOOV INTEGER,
+        hasVector INTEGER
     );'''
 
-    # Execute the query
+    # Execute the query to create the (empty) table
     cursor.execute(query)
     sqliteConnection.commit()
     print('Table created')
