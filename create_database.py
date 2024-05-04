@@ -152,7 +152,7 @@ try:
     result = cursor.fetchall()
     print('SQLite Version is {}'.format(result))
 
-    # Create a table in the database, VARCHAR numbers are currently arbitrary, but definitely far more than sufficient
+    # Create a table in the database, VARCHAR(6) for ppos because the longest possible ppos right now is 5 characters long, but what if...?
     # SQLite doesn't have BIT nor BOOLEAN, INTEGER is the accepted way to store boolean values
     query = f'''CREATE TABLE IF NOT EXISTS {language}Dictionary (
         word VARCHAR({max_value}) PRIMARY KEY,
