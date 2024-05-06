@@ -14,7 +14,7 @@ import warnings
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 
-def load_polish_model():
+def load_model():
     model_id = "speakleash/Bielik-7B-Instruct-v0.1-GPTQ"
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
     model = AutoModelForCausalLM.from_pretrained(
@@ -28,7 +28,7 @@ def load_polish_model():
 
     return pipe
 
-def prompt_polish_model(pipe, human_prompt, t = 120) -> str:
+def prompt_model(pipe, human_prompt, t = 120) -> str:
     prompt = f"<s>[INST]{human_prompt}[/INST]"
     outputs = pipe(
         prompt,
@@ -38,6 +38,11 @@ def prompt_polish_model(pipe, human_prompt, t = 120) -> str:
         top_p=0.95,
     )
     return outputs[0]["generated_text"]
+
+def generate_sample_sentence(pipe, word):
+    built_prompt = f"Napisz zdanie, w którym pojawia się słowo '{word}'."
+    result = prompt_model(pipe, built_prompt)
+    return result
 
 
 #For running as a solo script to play with a model

@@ -21,11 +21,16 @@ def load_model():
 def prompt_model(llm, human_prompt, t = 120) -> str:
     output = llm(
         f"<s>[INST] {human_prompt} [/INST]", # Prompt
-        max_tokens=120,  # Generate up to 120 tokens
+        max_tokens=t,  # Generate up to 120 tokens
         stop=["</s>"],   # Example stop token - not necessarily correct for this specific model! Please check before using.
         echo=False        # Whether to echo the prompt
     )
     return(output["choices"][0]["text"])
+
+def generate_sample_sentence(llm, word):
+    built_prompt = f"Write a sentence that contains the word '{word}'."
+    result = prompt_model(llm, built_prompt)
+    return result
 
 #For running as a solo script to play with a model
 if __name__ == "__main__":
