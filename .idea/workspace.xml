@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="created separate files for generating polish and english sentences">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/language_helper.py" afterDir="false" />
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="trying to clean up main.py and the chaos in my mind by using a few helper classes in language_helper.py">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate_sentence_en.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_en.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate_sentence_pl.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_pl.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/language_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/language_helper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -194,9 +191,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.similarity_tests" />
-        <item itemvalue="Python.main_test" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.main_test" />
+        <item itemvalue="Python.similarity_tests" />
         <item itemvalue="Python.generate_sentence_pl" />
         <item itemvalue="Python.generate_sentence_en" />
       </list>
@@ -240,6 +237,9 @@
     <MESSAGE value="made script to check sample similarity scores between one word and all others of similar ppos in dictionary" />
     <MESSAGE value="uploading created database with english dictionary and a bundle of similarity tests" />
     <MESSAGE value="created separate files for generating polish and english sentences" />
-    <option name="LAST_COMMIT_MESSAGE" value="created separate files for generating polish and english sentences" />
+    <MESSAGE value="made names consistent between sentence generators, added a &quot;generate_sample_sentence&quot; function to build the prompt with the target word automatically" />
+    <MESSAGE value="git ignore" />
+    <MESSAGE value="trying to clean up main.py and the chaos in my mind by using a few helper classes in language_helper.py" />
+    <option name="LAST_COMMIT_MESSAGE" value="trying to clean up main.py and the chaos in my mind by using a few helper classes in language_helper.py" />
   </component>
 </project>

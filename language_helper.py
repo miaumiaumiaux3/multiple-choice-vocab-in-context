@@ -5,14 +5,12 @@ import spacy
 
 
 class WordInfo:
-    def __init__(self, word):
-        self.word = word
+    def __init__(self, word, ppos = ""):
+        self.text = word
         self.lemma = ""
-        self.ppos = ""
-        self.inflections = []
-        self.has_vector = False
-        self.OOV = False
-
+        self.ppos = ppos
+        self.inflections = set()
+        self.goal_pos_tag = ""
 
 class LanguageInfo:
     def __init__(self):
