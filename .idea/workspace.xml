@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="made script that creates an SQL database (SQLite b/c no server requirements), takes about 15 minutes on sowpods.txt, but it's one and done">
-      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="created separate files for generating polish and english sentences">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/language_helper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/create_database.py" beforeDir="false" afterPath="$PROJECT_DIR$/create_database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_sentence_en.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_en.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_sentence_pl.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_pl.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample_sentence_generation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/sample_sentence_generation.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,8 +20,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="Jupyter Notebook" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -59,8 +60,13 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.create_database.executor": "Run",
+    "Python.generate_sentence_en.executor": "Run",
+    "Python.generate_sentence_pl.executor": "Run",
+    "Python.llm_sentence_generator.executor": "Run",
     "Python.main.executor": "Run",
+    "Python.main_test.executor": "Run",
     "Python.similarity_tests.executor": "Run",
+    "Python.test_bs.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
@@ -75,8 +81,8 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Python.similarity_tests">
-    <configuration name="create_database" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.main">
+    <configuration name="generate_sentence_en" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="multiple-choice-vocab-in-context" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -89,7 +95,29 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/create_database.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/generate_sentence_en.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="generate_sentence_pl" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="multiple-choice-vocab-in-context" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/generate_sentence_pl.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -112,6 +140,28 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="multiple-choice-vocab-in-context" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main_test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -145,8 +195,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.similarity_tests" />
+        <item itemvalue="Python.main_test" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.create_database" />
+        <item itemvalue="Python.generate_sentence_pl" />
+        <item itemvalue="Python.generate_sentence_en" />
       </list>
     </recent_temporary>
   </component>
@@ -184,6 +236,10 @@
     <MESSAGE value="made a seperate notebook just for bielik tests, because things get spicy when you load multiple models at once" />
     <MESSAGE value="Added English inflection replacement test, it works super duper smooth" />
     <MESSAGE value="made script that creates an SQL database (SQLite b/c no server requirements), takes about 15 minutes on sowpods.txt, but it's one and done" />
-    <option name="LAST_COMMIT_MESSAGE" value="made script that creates an SQL database (SQLite b/c no server requirements), takes about 15 minutes on sowpods.txt, but it's one and done" />
+    <MESSAGE value="fixed typos and cleaned up some small things" />
+    <MESSAGE value="made script to check sample similarity scores between one word and all others of similar ppos in dictionary" />
+    <MESSAGE value="uploading created database with english dictionary and a bundle of similarity tests" />
+    <MESSAGE value="created separate files for generating polish and english sentences" />
+    <option name="LAST_COMMIT_MESSAGE" value="created separate files for generating polish and english sentences" />
   </component>
 </project>
