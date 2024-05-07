@@ -4,6 +4,7 @@
 # python -m spacy download pl_core_news_md
 
 import string
+import random
 import spacy
 from lemminflect import getLemma, getAllLemmas, getInflection, getAllInflections, getAllInflectionsOOV, getAllLemmasOOV #some of these don't work :<
 from collections.abc import Iterable
@@ -35,16 +36,27 @@ def get_word_info(word, language, cursor):
 
     return result
 
-def create_inflection_set(lemma) -> set:
+# def create_inflection_set(lemma) -> set:
+#     '''Get all inflections with lemminflect and return them as a flattened list'''
+#     word_inflections = getAllInflections(lemma, upos=None)
+#     print(word_inflections)
+#     return set(flatten(list(word_inflections.values())))
+
+def create_inflection_set(word):
     '''Get all inflections with lemminflect and return them as a flattened list'''
-    word_inflections = getAllInflections(lemma, upos=None)
+    word_inflections = getAllInflections(word.lemma, upos=None)
     print(word_inflections)
-    return set(flatten(list(word_inflections.values())))
+    inflection_set = set(flatten(list(word_inflections.values())))
+    word.inflections = inflection_set
+    #return inflection_set
 
 
 def find_inflection_in_sentence(word, sentence) -> bool:
     '''Clean the sentence and check if any of the inflections are in current generated sentence
         If so, return True, otherwise return None'''
+    if not sentence:
+        return False
+
     words_in_gen_sentence = clean_sentence(sentence)
 
     for w in words_in_gen_sentence:
@@ -55,16 +67,16 @@ def find_inflection_in_sentence(word, sentence) -> bool:
         return False
 
 
-def get_word_position(word, sentence) -> int:
-    '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
-    doc = language.nlp(sentence)
-
-    for token in doc:
-        if token.text == word.text:
-            word.goal_pos_tag = token.tag_
-            return token.i
-    return -1
-
+#currently unused and unneeded, but was in the past so... just in case
+# def get_word_position(word, sentence) -> int:
+#     '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
+#     doc = language.nlp(sentence)
+#
+#     for token in doc:
+#         if token.text == word.text:
+#             word.goal_pos_tag = token.tag_
+#             return token.i
+#     return -1
 
 
 ######################################################################################
@@ -80,13 +92,14 @@ language.set_language_name_and_file(desired_language)
 # Get target word, any word in any form
 #original_word = input("Enter the target word:\n")
 #check for blank input, if blank, ask again
-#target_word = lang.WordInfo(original_word)
 
-target_word = lang.WordInfo("sound")
+original_word = "sounds" #we're gonna need the completely unchanged word later, so don't forget
+target_word = lang.WordInfo(original_word)
 
 ######################################################################################
 ### Get word info from db: check if exists and get info at the same time
 ###############################################################################
+
 try:
 
     # Connect to DB and create a cursor
@@ -121,9 +134,9 @@ try:
         cursor.close()
         exit()
 
-    # Get all inflections of the target word's main lemma
-    target_word.inflections = create_inflection_set(target_word.lemma)
-    print(f"Inflections of the target word: {target_word.inflections}")
+    # Create and store all inflections of the target word's main lemma
+    create_inflection_set(target_word)
+    print(f"Inflections of the target word '{target_word.text}': {target_word.inflections}")
 
     # Generate sentence from target word
     generated_sentence = language.generate_sentence(target_word.text)
@@ -136,9 +149,8 @@ try:
         print(f"Re-generated sentence: {generated_sentence}")
 
     #Hurray! We have a complete sentence with the target word inflected in it! :D
-    #Let's start grouping our words and sentences
-    word_sentence_pairs = [(target_word, generated_sentence)]
-    print(f"Word-sentence pairs: {word_sentence_pairs}")
+    #Add it to the WordInfo object for safe-keeping!
+    target_word.sentence = generated_sentence
 
 
     ################################################################################
@@ -152,17 +164,16 @@ try:
         pos_queries += f" OR ppos = '{char}' "
 
 
-    #We'll grab 12 because it's just as fast to get 1 random word as it is to get 24 (or 100, or more, if we want higher avg similarity)
+    #We'll grab 50 because it's just as fast to get 1 random word (or 100, or more, if we want higher avg similarity)
     query = f'''SELECT word, ppos FROM {language.name}Dictionary 
             WHERE isOOV = 0 AND lemma is NULL AND hasVector = 1
-            AND (ppos = '{target_word.ppos}'{pos_queries}) AND word != '{target_word.text}'
-            ORDER BY RANDOM() LIMIT 24;
+            AND (ppos = '{target_word.ppos}'{pos_queries}) AND word != '{target_word.lemma}'
+            ORDER BY RANDOM() LIMIT 50;
             '''
 
     print(query)
     cursor.execute(query)
     result = cursor.fetchall() #list of tuples (word, ppos)
-    print(result)
 
     #####################################
     #Close the poor SQLite connection, we don't need it anymore
@@ -173,49 +184,79 @@ try:
     #Choose 3 random words from the SELECTed words with the highest similarity that's still under 0.5
     #This should result in a slightly more balanced set of words that are still definitely and distinctly different from the target word
 
-    #first order by similarity, deleting any that are over 0.5, then grab the top 3\
-
+    #first order by similarity, deleting any that are over 0.5, then grab the top 3
+    # only compare lemmas to lemmas!
     dict_words = {}
     for r in result:
-        print(r[0], target_word.text, language.nlp(r[0]).similarity(language.nlp(target_word.text)))
-        simp = language.nlp(r[0]).similarity(language.nlp(target_word.text))
+        print(r[0], target_word.lemma, language.nlp(r[0]).similarity(language.nlp(target_word.lemma)))
+        simp = language.nlp(r[0]).similarity(language.nlp(target_word.lemma))
         if simp < 0.5:
             dict_words[r] = simp
 
-    top_3 = sorted(dict_words, key=dict_words.get, reverse=True)[:3]
-    print(top_3)
+    top3 = sorted(dict_words, key=dict_words.get, reverse=True)[:3]
+    print(top3)
 
-    word1 = lang.WordInfo(top_3[0][0], top_3[0][1])
-    word2 = lang.WordInfo(top_3[1][0], top_3[1][1])
-    word3 = lang.WordInfo(top_3[2][0], top_3[2][1])
+    #Create new word objects for the top 3 words, intializing them with their text and ppos
+    word1 = lang.WordInfo(top3[0][0], top3[0][1])
+    word2 = lang.WordInfo(top3[1][0], top3[1][1])
+    word3 = lang.WordInfo(top3[2][0], top3[2][1])
 
-    potential_words = [word1, word2, word3]
+    top3_wordlist = [word1, word2, word3]
+
+    #Get and set all inflections of our words
+    for w in top3_wordlist:
+        w.lemma = w.text #we only grabbed lemmas from the db, so this is true
+        create_inflection_set(w)
+        print(f"Inflections of {w.text}: {w.inflections}")
 
 
-    for j in range(0, len(potential_words) -1):
-        #Generate sentences for the 3 random words, one at a time
-        generated_sentence = language.generate_sentence(potential_words[j].text)
+    #Generate sentences for the 3 random words, one at a time
+    for w in top3_wordlist:
+        generated_sentence = ""
         ## Make sure the sentence contains a registered inflection of the target word, if not, generate a new sentence
-        while not find_inflection_in_sentence(potential_words[j], generated_sentence):
-            print(f"No inflection of {potential_words[j].text} found in the generated sentence. Generating a new sentence.")
-            generated_sentence = language.generate_sentence(potential_words[j].text)
+        while not find_inflection_in_sentence(w, generated_sentence):
+            print(f"No inflection of {w.text} found in the generated sentence. Generating a new sentence.")
+            generated_sentence = language.generate_sentence(w.text)
             print(f"Re-generated sentence: {generated_sentence}")
 
-        # #Get index of inflected word in sentence
-        word_index = get_word_position(potential_words[j], generated_sentence)
-        word_sentence_pairs.append((potential_words[j], generated_sentence, word_index))
-        print(f"Word-sentence pairs: {word_sentence_pairs}")
+        # Get index of inflected word in sentence -- NO LONGER
+        #word_index = get_word_position(w, generated_sentence)
+        # Save the sentence in the WordInfo object
+        w.sentence = generated_sentence
+        print(f"Word-sentence pair: {w.text} -> {w.sentence}")
 
     ########################################
     # Now we have 4 word-sentence pairs
     # Time to make the replacements
     ########################################
 
-    # CURRENT ISSUE --
-    #Re-generated sentence:  Once you press the self-destruct button, the data on this hard drive will be wiped irreversibly, leaving no trace of the information it once contained.
-    #No inflection of irreversibly found in the generated sentence. Generating a new sentence.
-    #not finding inflection
+    for w in top3_wordlist:
+        #replace the word with the inflected target word
+        replacement = getInflection(target_word.lemma, tag = w.goal_pos_tag)[0]
 
+        w.sentence = w.sentence.replace(w.text, replacement)
+        print(f"Replacement: {w.text}({w.goal_pos_tag}) -> {replacement}")
+        print(f"New sentence: {w.sentence}")
+
+    #Create the final wordlist and shuffle it
+    final_wordlist = [target_word]
+    final_wordlist.extend(top3_wordlist)
+    random.shuffle(final_wordlist)
+
+    #print the final sentences
+    print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    print("-----------------------------------------------------------------------------------------")
+    print(f"In which sentence is the word {original_word} most correctly used?")
+    for w in final_wordlist:
+        print(" - " + w.sentence)
+    print("-----------------------------------------------------------------------------------------")
+    print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+    #print the target word's sentence
+    print(f"Correct: {target_word.text}({target_word.ppos}:{target_word.goal_pos_tag}) -> {target_word.sentence}")
+    print(f"Incorrect: {word1.text}({word1.ppos}:{word1.goal_pos_tag}) -> {word1.sentence}")
+    print(f"Incorrect: {word2.text}({word2.ppos}:{word2.goal_pos_tag}) -> {word2.sentence}")
+    print(f"Incorrect: {word3.text}({word3.ppos}:{word3.goal_pos_tag}) -> {word3.sentence}")
 
 
 # Handle errors
@@ -228,7 +269,6 @@ finally:
     if sqliteConnection:
         sqliteConnection.close()
         print('SQLite Connection closed')
-######################################################################################
 
 
 
