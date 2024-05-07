@@ -5,9 +5,9 @@ import spacy
 
 
 class WordInfo:
-    def __init__(self, word, ppos = ""):
+    def __init__(self, word, lemma ="", ppos = ""):
         self.text = word
-        self.lemma = ""
+        self.lemma = lemma
         self.ppos = ppos
         self.inflections = set()
         self.sentence = ""
