@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="major progress in main.py, in the middle of debugging some stuff but it's REALLY CLOSE to having actual samples of some english multiple choice questions!">
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_sentence_en.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_en.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_sentence_pl.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_pl.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/language_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/language_helper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -219,7 +221,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="test" />
     <MESSAGE value="Attempting to use huggingface pipelines to generate sentences from a command prompt. It's a battle that we haven't won yet x_x" />
     <MESSAGE value="ok, comparing multiple models for both polish and english sentence generation and I think we have our current winners. I'm suddenly a huge fan of quantization" />
     <MESSAGE value="renamed file and testing to see if we can get the github preview to work" />
@@ -242,6 +243,9 @@
     <MESSAGE value="trying to clean up main.py and the chaos in my mind by using a few helper classes in language_helper.py" />
     <MESSAGE value="I keep messing with WordInfo because I keep needed more things. I feel like it should be a struct. I don't think python has those though" />
     <MESSAGE value="major progress in main.py, in the middle of debugging some stuff but it's REALLY CLOSE to having actual samples of some english multiple choice questions!" />
-    <option name="LAST_COMMIT_MESSAGE" value="major progress in main.py, in the middle of debugging some stuff but it's REALLY CLOSE to having actual samples of some english multiple choice questions!" />
+    <MESSAGE value="added sentences to WordInfo to keep them nicely paired" />
+    <MESSAGE value="removed unncessary word_index from WordInfo" />
+    <MESSAGE value="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero" />
+    <option name="LAST_COMMIT_MESSAGE" value="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero" />
   </component>
 </project>

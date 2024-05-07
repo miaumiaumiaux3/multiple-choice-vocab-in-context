@@ -36,6 +36,7 @@ def get_word_info(word, language, cursor):
 
     return result
 
+# #Old version which returned the value instead of setting it in the object, no longer needed
 # def create_inflection_set(lemma) -> set:
 #     '''Get all inflections with lemminflect and return them as a flattened list'''
 #     word_inflections = getAllInflections(lemma, upos=None)
@@ -48,8 +49,6 @@ def create_inflection_set(word):
     print(word_inflections)
     inflection_set = set(flatten(list(word_inflections.values())))
     word.inflections = inflection_set
-    #return inflection_set
-
 
 def find_inflection_in_sentence(word, sentence) -> bool:
     '''Clean the sentence and check if any of the inflections are in current generated sentence
@@ -67,7 +66,16 @@ def find_inflection_in_sentence(word, sentence) -> bool:
         return False
 
 
-#currently unused and unneeded, but was in the past so... just in case
+def get_goal_pos_tag(word, sentence):
+    '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
+    doc = language.nlp(sentence)
+    for token in doc:
+        if token.text == word.text:
+            word.goal_pos_tag = token.tag_
+            return
+
+
+# #Currently unused and unneeded, but was in the past so... just in case
 # def get_word_position(word, sentence) -> int:
 #     '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
 #     doc = language.nlp(sentence)
@@ -75,6 +83,7 @@ def find_inflection_in_sentence(word, sentence) -> bool:
 #     for token in doc:
 #         if token.text == word.text:
 #             word.goal_pos_tag = token.tag_
+#             #word.index = token.i
 #             return token.i
 #     return -1
 
@@ -89,11 +98,16 @@ desired_language = "English" #Polish implementation is not yet complete
 #Load appropriate space model and database filename
 language.set_language_name_and_file(desired_language)
 
-# Get target word, any word in any form
-#original_word = input("Enter the target word:\n")
-#check for blank input, if blank, ask again
+# Get target word -- does not need to be a lemma
+# We're gonna need the completely unchanged word later, so don't forget
+original_word = input("Enter a noun, adjective, verb, or adverb:\n")
 
-original_word = "sounds" #we're gonna need the completely unchanged word later, so don't forget
+#check for invalid input
+while not original_word or not original_word.isalpha() or len(original_word) < 2:
+    print("Invalid input. Please enter a word.")
+    original_word = input("Enter the target word:\n")
+
+#original_word = "sounds"
 target_word = lang.WordInfo(original_word)
 
 ######################################################################################
@@ -152,23 +166,33 @@ try:
     #Add it to the WordInfo object for safe-keeping!
     target_word.sentence = generated_sentence
 
+    #store the goal pos tag for the target word
+    # *********Might use this to inflect randomly chosen words later or to change how words are chosen*************
+    get_goal_pos_tag(target_word, generated_sentence)
+
 
     ################################################################################
     # Now that we've confirmed we have a legit sentence, we need 3 more from other random words
     ###############################################################################
-
     # Get 3 random words from the database that share at least one ppos tag with the target_word
-    #Medium inclusive, include exact matches, and for each letter, include the "pure" matching words
-    pos_queries = ''
-    for char in target_word.ppos:
-        pos_queries += f" OR ppos = '{char}' "
 
 
-    #We'll grab 50 because it's just as fast to get 1 random word (or 100, or more, if we want higher avg similarity)
+    # #Medium inclusive, include exact matches, and for each letter, include the "pure" matching words
+    # pos_queries = ''
+    # for char in target_word.ppos:
+    #     pos_queries += f" OR ppos = '{char}' "
+    #
+
+    # Almost exclusive:
+    # Include only exact ppos matches and "pure" base form of the target_word.goal_pos_tag
+    pos_base = target_word.goal_pos_tag[0]
+    pos_queries = f" OR ppos = '{pos_base}'" if pos_base != target_word.ppos else ''
+
+    #We'll grab 42 because it's just as fast to get 1 random word (or 100, or more, if we want higher avg similarity)
     query = f'''SELECT word, ppos FROM {language.name}Dictionary 
             WHERE isOOV = 0 AND lemma is NULL AND hasVector = 1
             AND (ppos = '{target_word.ppos}'{pos_queries}) AND word != '{target_word.lemma}'
-            ORDER BY RANDOM() LIMIT 50;
+            ORDER BY RANDOM() LIMIT 42;
             '''
 
     print(query)
@@ -188,26 +212,43 @@ try:
     # only compare lemmas to lemmas!
     dict_words = {}
     for r in result:
-        print(r[0], target_word.lemma, language.nlp(r[0]).similarity(language.nlp(target_word.lemma)))
+        print(r[0], r[1], target_word.lemma, language.nlp(r[0]).similarity(language.nlp(target_word.lemma)))
         simp = language.nlp(r[0]).similarity(language.nlp(target_word.lemma))
         if simp < 0.5:
             dict_words[r] = simp
 
-    top3 = sorted(dict_words, key=dict_words.get, reverse=True)[:3]
-    print(top3)
+    top_words = sorted(dict_words, key=dict_words.get, reverse=True)[:21] #top half of similarities
+    print(top_words)
+
+    ##****************Testing****************##
+    chosen_words = []
+    i = 0
+    while len(chosen_words) < 3:
+        word = getInflection(top_words[i][0], tag=target_word.goal_pos_tag, inflect_oov=False)
+        while not word:
+            i += 1
+            word = getInflection(top_words[i][0], tag=target_word.goal_pos_tag, inflect_oov=False)
+            print(i, top_words[i][0], "word>>>", word)
+        chosen_words.append((word[0],top_words[i]))
+        i += 1
+
+    print(chosen_words)
+
+    word1 = lang.WordInfo(chosen_words[0][0], lemma=chosen_words[0][1][0], ppos=chosen_words[0][1][1])
+    word2 = lang.WordInfo(chosen_words[1][0], lemma=chosen_words[1][1][0], ppos=chosen_words[1][1][1])
+    word3 = lang.WordInfo(chosen_words[2][0], lemma=chosen_words[2][1][0], ppos=chosen_words[2][1][1])
 
     #Create new word objects for the top 3 words, intializing them with their text and ppos
-    word1 = lang.WordInfo(top3[0][0], top3[0][1])
-    word2 = lang.WordInfo(top3[1][0], top3[1][1])
-    word3 = lang.WordInfo(top3[2][0], top3[2][1])
+    #word1 = lang.WordInfo(top3[0][0], top3[0][1])
+    #word2 = lang.WordInfo(top3[1][0], ppos = top3[1][1])
+    #word3 = lang.WordInfo(top3[2][0], ppos = top3[2][1])
 
     top3_wordlist = [word1, word2, word3]
 
     #Get and set all inflections of our words
     for w in top3_wordlist:
-        w.lemma = w.text #we only grabbed lemmas from the db, so this is true
         create_inflection_set(w)
-        print(f"Inflections of {w.text}: {w.inflections}")
+        print(f"Inflections of {w.lemma}: {w.inflections}")
 
 
     #Generate sentences for the 3 random words, one at a time
@@ -219,8 +260,9 @@ try:
             generated_sentence = language.generate_sentence(w.text)
             print(f"Re-generated sentence: {generated_sentence}")
 
-        # Get index of inflected word in sentence -- NO LONGER
-        #word_index = get_word_position(w, generated_sentence)
+        # # Get index of inflected word in sentence
+        # word_index = get_word_position(w, generated_sentence)
+        get_goal_pos_tag(w, generated_sentence)
         # Save the sentence in the WordInfo object
         w.sentence = generated_sentence
         print(f"Word-sentence pair: {w.text} -> {w.sentence}")
@@ -233,7 +275,6 @@ try:
     for w in top3_wordlist:
         #replace the word with the inflected target word
         replacement = getInflection(target_word.lemma, tag = w.goal_pos_tag)[0]
-
         w.sentence = w.sentence.replace(w.text, replacement)
         print(f"Replacement: {w.text}({w.goal_pos_tag}) -> {replacement}")
         print(f"New sentence: {w.sentence}")
@@ -246,7 +287,7 @@ try:
     #print the final sentences
     print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     print("-----------------------------------------------------------------------------------------")
-    print(f"In which sentence is the word {original_word} most correctly used?")
+    print(f"In which sentence is a form of the word {original_word} most correctly used?")
     for w in final_wordlist:
         print(" - " + w.sentence)
     print("-----------------------------------------------------------------------------------------")
