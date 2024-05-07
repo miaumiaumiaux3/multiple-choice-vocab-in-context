@@ -40,7 +40,7 @@ def prompt_model(pipe, human_prompt, t = 120) -> str:
     return outputs[0]["generated_text"]
 
 def generate_sample_sentence(pipe, word):
-    built_prompt = f"Napisz zdanie, w którym pojawia się słowo '{word}'."
+    built_prompt = f"Napisz zdanie, w którym pojawia się słowo {word}."
     result = prompt_model(pipe, built_prompt)
     return result
 
