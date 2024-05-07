@@ -12,7 +12,7 @@ class WordInfo:
         self.inflections = set()
         self.sentence = ""
         self.goal_pos_tag = ""
-        self.word_index = None
+
 
 class LanguageInfo:
     def __init__(self):
