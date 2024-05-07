@@ -10,6 +10,7 @@ class WordInfo:
         self.lemma = ""
         self.ppos = ppos
         self.inflections = set()
+        self.sentence = ""
         self.goal_pos_tag = ""
 
 class LanguageInfo:
