@@ -2,7 +2,6 @@ import sqlite3
 import spacy
 import lemminflect
 from lemminflect import getAllLemmas, getInflection, getAllInflections
-from collections.abc import Iterable
 
 
 language = "English" #for now, just testing with english
@@ -26,15 +25,6 @@ batches = len(wordlist) // 1000
 if len(wordlist) % 1000 != 0:
     batches += 1
 print(f"Inserting {len(wordlist)} words in {batches} batches of 1000")
-
-
-def flatten(xs):
-    '''Flattens a list of lists'''
-    for x in xs:
-        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
-            yield from flatten(x)
-        else:
-            yield x
 
 
 def create_eng_ppos(lemmas):
@@ -94,7 +84,7 @@ def insert_words_into_db(query_list):
     print(f"Inserted and committed {len(query_list)} rows into db.\nLast entry was: {query_list[-1]}")
 
 
-def build_query(word_doc, all_lems, ppos, OOV, hasvec, is_lemma):
+def build_query(word_doc, all_lems, ppos, hasvec, is_lemma):
     '''Build the query to insert a word into the database'''
     #convert lem and ppos to strings surrounded by '' for SQL, or NULL if they are None
     if not all_lems:
@@ -104,8 +94,8 @@ def build_query(word_doc, all_lems, ppos, OOV, hasvec, is_lemma):
         all_lems = f"'{all_lems}'"
     ppos = f"'{ppos}'" if ppos else 'NULL'
 
-    query = f'''INSERT INTO {language}Dictionary (word, lemma, ppos, isOOV, hasVector, isLemma) VALUES ('{word_doc.text}', {all_lems}, {ppos}, {OOV}, {hasvec}, {is_lemma});'''
-    #print(f"Created query for: {word_doc.text}, {lem}, {ppos}, {OOV}, {hasVector}, {is_lemma}") #effectively a loading screen to show all inserts for funsies/debugging
+    query = f'''INSERT INTO {language}Dictionary (word, lemma, ppos, hasVector, isLemma) VALUES ('{word_doc.text}', {all_lems}, {ppos}, {OOV}, {hasvec}, {is_lemma});'''
+    #print(f"Created query for: {word_doc.text}, {lem}, {ppos}, {hasVector}, {is_lemma}") #effectively a loading screen to show all inserts for funsies/debugging
     return query
 
 
@@ -118,7 +108,6 @@ def insert_dictionary_into_db(wordlist, language):
         for word in wordlist:
             word_doc = nlp(word)
             hasvec = 1 if word_doc.has_vector else 0
-            OOV = 0
             ppos = None
             is_lemma = 0
             lemma_mess = list(getAllLemmas(word, upos = None).values())
@@ -129,18 +118,16 @@ def insert_dictionary_into_db(wordlist, language):
 
             lemmas = list(set(lemmas)) #remove duplicates
 
-            #if no lemmas, then it's OOV and our work is done, if there are, we grab the first one and create the ppos
-            if not lemmas:
-                OOV = 1
-            else:
+            #if no lemmas, then it's OOV and our work is done, if there are, then we can get the ppos from all of them
+            if lemmas:
                 ppos = create_eng_ppos(lemmas)
 
-            #if the word is already the lemma, then is_lemma will be TRUE/1
+            #if the word is a lemma, then is_lemma will be TRUE/1
             if word in lemmas:
                 is_lemma = 1
 
             #build query and add to list
-            query_list.append(build_query(word_doc, lemmas, ppos, OOV, hasvec, is_lemma))
+            query_list.append(build_query(word_doc, lemmas, ppos, hasvec, is_lemma))
 
             if len(query_list) == 1000 or word == wordlist[-1]: #batch insert every 1000 queries, or if it's the last word
                 insert_words_into_db(query_list) #insert fully built entries into database
@@ -179,9 +166,8 @@ try:
     # SQLite doesn't have BIT nor BOOLEAN, INTEGER is the accepted way to store boolean values
     query = f'''CREATE TABLE IF NOT EXISTS {language}Dictionary (
         word VARCHAR({max_value}) PRIMARY KEY,
-        lemma TEXT,
+        lemmas TEXT,
         ppos VARCHAR(6),
-        isOOV INTEGER,
         hasVector INTEGER,
         isLemma INTEGER
     );'''
