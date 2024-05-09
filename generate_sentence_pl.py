@@ -57,7 +57,7 @@ if __name__ == "__main__":
     print(f"PyTorch version: {torch.__version__}")
     print("------------------------------------------------------------")
 
-    pipe = load_polish_model()
+    pipe = load_model()
     gptq = True
 
     while True:
@@ -67,5 +67,5 @@ if __name__ == "__main__":
         if not human_prompt:
             print("You wrote nothing, so I'm assuming you're done for now, goodbye!")
             exit()
-        result = prompt_polish_model(pipe, human_prompt)
+        result = prompt_model(pipe, human_prompt)
         print(result)
