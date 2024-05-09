@@ -29,6 +29,7 @@ def prompt_model(llm, human_prompt, t = 120) -> str:
 
 def generate_sample_sentence(llm, word):
     built_prompt = f"Write a sentence that contains the word {word}."
+    #built_prompt = f"Use the word {word} in a sentence."
     result = prompt_model(llm, built_prompt)
     return result
 
