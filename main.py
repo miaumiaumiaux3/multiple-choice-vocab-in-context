@@ -3,11 +3,14 @@
 # python -m spacy download en_core_web_md ##md size is minimum that has vectors for words
 # python -m spacy download pl_core_news_md
 
+import time
+from datetime import timedelta
 import string
 import random
+from collections.abc import Iterable
+
 import spacy
 from lemminflect import getLemma, getAllLemmas, getInflection, getAllInflections, getAllInflectionsOOV, getAllLemmasOOV #some of these don't work :<
-from collections.abc import Iterable
 
 import sqlite3
 
@@ -23,7 +26,8 @@ def flatten(xs):
 
 def clean_sentence(sentence):
     '''Make lowercase, remove punctuation and split into words'''
-    sentence = sentence.lower().translate(str.maketrans('', '', string.punctuation))
+    punctuation_without_apostrophe = '.,?!:;()[]{}@#$%^&*<>~-_=+|/"'
+    sentence = sentence.lower().translate(str.maketrans('', '', punctuation_without_apostrophe))
     word_list = sentence.split()
     return word_list
 
@@ -57,7 +61,6 @@ def find_inflection_in_sentence(word, sentence) -> bool:
         return False
 
     words_in_gen_sentence = clean_sentence(sentence)
-
     for w in words_in_gen_sentence:
         if w in word.inflections:
             word.text = w #set the word's text to the inflected form found in the sentence
@@ -66,26 +69,56 @@ def find_inflection_in_sentence(word, sentence) -> bool:
         return False
 
 
-def get_goal_pos_tag(word, sentence):
-    '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
-    doc = language.nlp(sentence)
-    for token in doc:
-        if token.text == word.text:
-            word.goal_pos_tag = token.tag_
-            return
-
-
 # #Currently unused and unneeded, but was in the past so... just in case
-# def get_word_position(word, sentence) -> int:
+# def get_goal_pos_tag(word, sentence):
 #     '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
 #     doc = language.nlp(sentence)
-#
 #     for token in doc:
 #         if token.text == word.text:
 #             word.goal_pos_tag = token.tag_
-#             #word.index = token.i
-#             return token.i
-#     return -1
+#             return
+
+def set_word_position_and_goal_pos_tag(word, sentence) -> int:
+    '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
+    doc = language.nlp(sentence)
+
+    for token in doc:
+        #if the token is the target word and not a proper noun
+        if token.text == word.text and token.pos_ != "PROPN":
+            #store the goal pos tag and index for the target word
+            word.goal_pos_tag = token.tag_
+            word.index = token.i
+            print(f"{word.text} with pos: {word.goal_pos_tag} found at index: {word.index}")
+            return token.i
+    return -1
+
+
+def generate_sentence_with_inflection(word):
+    '''Generate a sentence with the target word inflected in it
+    Make sure the sentence contains a registered inflection of the target word, if not, repeat the process
+    '''
+
+    #Generate a sentence with the target word with LLM
+    generated_sentence = language.generate_sentence(word.text)
+    print(f"Generated sentence with {word.text}: {generated_sentence}")
+
+    #Make sure the sentence contains a registered inflection of the target word
+    if not find_inflection_in_sentence(word, generated_sentence):
+        print("No appropriate inflection found in sentence, regenerating")
+        generate_sentence_with_inflection(word) #call self until an inflection is found
+
+    #Make sure the word in the sentence is not a proper noun, assign its index and goal pos tag to WordInfo object
+    elif set_word_position_and_goal_pos_tag(word, generated_sentence) == -1:
+        print("Target word not found in sentence, regenerating")
+        generate_sentence_with_inflection(word)
+
+    else:
+        #Hurray! We have a complete sentence with the target word inflected appropriately in it! :D
+        #Add the sentence to the WordInfo object for safe-keeping!
+        word.sentence = generated_sentence
+        print("Appropriate inflection found in sentence!")
+        print(f"Target word-sentence pair: {word.text} -> {word.sentence}")
+
 
 
 ######################################################################################
@@ -100,6 +133,9 @@ language.set_language_name_and_file(desired_language)
 
 #main! to repeat and stuff!
 def main():
+    #start timer
+    start_time = time.monotonic()
+
     # Get target word -- does not need to be a lemma
     # We're gonna need the completely unchanged word later, so don't forget
     original_word = input("Enter a noun, adjective, verb, or adverb:\n")
@@ -109,7 +145,7 @@ def main():
         print("Invalid input. Please enter a word.")
         original_word = input("Enter the target word:\n")
 
-    #original_word = "sounds"
+    original_word = original_word.lower()
     target_word = lang.WordInfo(original_word)
 
     try:
@@ -127,9 +163,8 @@ def main():
         print(f"Target word info: {result}")
 
         if not result:
-            print("Target word not found in database")
-            cursor.close()
-            exit()
+            print("Target word not found in database, please pick another word." + "\n" + "-" * 13)
+            main()
 
         if result[1]: #lemma is the 2nd column
             target_word.lemma = result[1]
@@ -140,36 +175,19 @@ def main():
         if result[2]: #ppos is the 3rd column
             target_word.ppos = result[2]
         else:
-            print("Word has no relevant POS tag")
-            cursor.close()
-            exit()
+            print("Word has no relevant POS tag in lemminflect, please pick another word." + "\n" + "-" * 13)
+            main()
 
         if not result[4]: #hasVector is the 5th column
-            print("Word has no vector")
-            cursor.close()
-            exit()
+            print("Word has no vector in spaCy, please pick another word." + "\n" + "-" * 13)
+            main()
 
         # Create and store all inflections of the target word's main lemma
         create_inflection_set(target_word)
         print(f"Inflections of the target word '{target_word.text}': {target_word.inflections}")
 
-        # Generate sentence from target word
-        generated_sentence = language.generate_sentence(target_word.text)
-        print(f"Generated sentence: {generated_sentence}")
-
-        ## Make sure the sentence contains a registered inflection of the target word, if not, generate a new sentence
-        while not find_inflection_in_sentence(target_word, generated_sentence):
-            print("No inflection of the target word found in the generated sentence. Generate a new sentence.")
-            generated_sentence = language.generate_sentence(target_word.text)
-            print(f"Re-generated sentence: {generated_sentence}")
-
-        #Hurray! We have a complete sentence with the target word inflected in it! :D
-        #Add it to the WordInfo object for safe-keeping!
-        target_word.sentence = generated_sentence
-
-        #store the goal pos tag for the target word
-        # *********Might use this to inflect randomly chosen words later or to change how words are chosen*************
-        get_goal_pos_tag(target_word, generated_sentence)
+        # Generate sentence from target word, run all checks in the process
+        generate_sentence_with_inflection(target_word)
 
 
         ################################################################################
@@ -221,28 +239,59 @@ def main():
         top_words = sorted(dict_words, key=dict_words.get, reverse=True)[:21] #top half of similarities
         print(top_words)
 
-        ##****************Testing****************##
+        # From the top 21, check in descending order for the first 3 that have the same inflection as the target word
+        # If this ever goes past 21, this will break and crash, but honestly it almost never goes past the first 3
         chosen_words = []
         i = 0
-        while len(chosen_words) < 3:
-            word = getInflection(top_words[i][0], tag=target_word.goal_pos_tag, inflect_oov=False)
-            while not word:
-                i += 1
-                word = getInflection(top_words[i][0], tag=target_word.goal_pos_tag, inflect_oov=False)
-                print(i, top_words[i][0], "word>>>", word)
-            chosen_words.append((word[0],top_words[i]))
+        valid_word = ''
+        while len(chosen_words) < 3 and not valid_word:
+            if i >= len(top_words):
+                print("Not enough words in the top 21 with the same inflection as the target word" + "\n" + "-" * 13)
+                break #might be safer to restart the program, but this might also work, let's see
+
+            valid_word = getInflection(top_words[i][0], tag=target_word.goal_pos_tag, inflect_oov=False)
+            print(i, top_words[i][0], "valid_word>>>", valid_word)
+
+            # if we got past the fail-safes, we can add the word to the chosen words, and reset valid_word
+            if valid_word:
+                chosen_words.append((valid_word[0], top_words[i]))
+                valid_word = ''
+            # iterate
             i += 1
 
-        print(chosen_words)
+        print("Chosen words:", chosen_words)
 
-        word1 = lang.WordInfo(chosen_words[0][0], lemma=chosen_words[0][1][0], ppos=chosen_words[0][1][1])
-        word2 = lang.WordInfo(chosen_words[1][0], lemma=chosen_words[1][1][0], ppos=chosen_words[1][1][1])
-        word3 = lang.WordInfo(chosen_words[2][0], lemma=chosen_words[2][1][0], ppos=chosen_words[2][1][1])
+        # # Can use this instead of choosing words at all if you don't care about mirroring inflection with target word
+        # word1 = lang.WordInfo(top_words[0][0], lemma=top_words[0][0], ppos=top_words[0][1])
+        # word2 = lang.WordInfo(top_words[1][0], lemma=top_words[1][0], ppos=top_words[1][1])
+        # word3 = lang.WordInfo(top_words[2][0], lemma=top_words[2][0], ppos=top_words[2][1])
 
-        #Create new word objects for the top 3 words, intializing them with their text and ppos
-        #word1 = lang.WordInfo(top3[0][0], top3[0][1])
-        #word2 = lang.WordInfo(top3[1][0], ppos = top3[1][1])
-        #word3 = lang.WordInfo(top3[2][0], ppos = top3[2][1])
+
+        if len(chosen_words) < 3:
+            # Failsafe if chosen words do not match inflection
+            #   like with "carving" where lemminflect doesn't believe it can be a verb,
+            #   but spaCy does, so they fight and no one wins
+            print("Not enough chosen words, reverting to default top 3 words")
+
+            #First remove chosen words from top_words list:
+            for c in chosen_words:
+                top_words.remove(c)
+            #Then re-add any chosen words to the front, just in case there were valid options
+            for c in chosen_words:
+                top_words.insert(0, c)
+
+            # Create new word objects for the top 3 words, intializing them with their text and ppos
+            word1 = lang.WordInfo(top_words[0][0], lemma=top_words[0][0], ppos=top_words[0][1])
+            word2 = lang.WordInfo(top_words[1][0], lemma=top_words[1][0], ppos=top_words[1][1])
+            word3 = lang.WordInfo(top_words[2][0], lemma=top_words[2][0], ppos=top_words[2][1])
+        else:
+            #Create new word objects for the chosen words, intializing them with their text and ppos
+            word1 = lang.WordInfo(chosen_words[0][0], lemma=chosen_words[0][1][0], ppos=chosen_words[0][1][1])
+            word2 = lang.WordInfo(chosen_words[1][0], lemma=chosen_words[1][1][0], ppos=chosen_words[1][1][1])
+            word3 = lang.WordInfo(chosen_words[2][0], lemma=chosen_words[2][1][0], ppos=chosen_words[2][1][1])
+
+
+
 
         top3_wordlist = [word1, word2, word3]
 
@@ -254,18 +303,7 @@ def main():
 
         #Generate sentences for the 3 random words, one at a time
         for w in top3_wordlist:
-            generated_sentence = ""
-            ## Make sure the sentence contains a registered inflection of the target word, if not, generate a new sentence
-            while not find_inflection_in_sentence(w, generated_sentence):
-                print(f"No inflection of {w.text} found in the generated sentence. Generating a new sentence.")
-                generated_sentence = language.generate_sentence(w.text)
-                print(f"Re-generated sentence: {generated_sentence}")
-
-            # # Get index of inflected word in sentence
-            # word_index = get_word_position(w, generated_sentence)
-            get_goal_pos_tag(w, generated_sentence)
-            # Save the sentence in the WordInfo object
-            w.sentence = generated_sentence
+            generate_sentence_with_inflection(w)
             print(f"Word-sentence pair: {w.text} -> {w.sentence}")
 
         ########################################
@@ -276,6 +314,12 @@ def main():
         for w in top3_wordlist:
             #replace the word with the inflected target word
             replacement = getInflection(target_word.lemma, tag = w.goal_pos_tag)[0]
+
+            #capitalize the first letter if the word is the first word in the sentence
+            #else it won't be found nor replaced
+            if w.word_index == 0:
+                replacement = replacement.capitalize()
+
             w.sentence = w.sentence.replace(w.text, replacement)
             print(f"Replacement: {w.text}({w.goal_pos_tag}) -> {replacement}")
             print(f"New sentence: {w.sentence}")
@@ -306,9 +350,15 @@ def main():
     # Close DB Connection irrespective of success or failure
     finally:
 
+        #end timer
+        end_time = time.monotonic()
+        print('Runtime: ' + str(timedelta(seconds=end_time - start_time)))
+
         if sqliteConnection:
             sqliteConnection.close()
             print('SQLite Connection closed')
+
+
 
 
 #####################################################################
@@ -318,11 +368,18 @@ def main():
 
 main()
 
-play_again = input("Would you like to play again? (y/n)\n")
+play_again = input("Would you like to generate another vocab quiz question? (y/n)\n")
 while play_again.lower() == "y":
     main()
-    play_again = input("Would you like to play again? (y/n)\n")
+    play_again = input("Would you like to generate another vocab quiz question? (y/n)\n")
 else:
     print("Goodbye!")
     exit()
 
+
+###########Current known issues############
+# we need to actually get ALL lemmas and all inflections of all lemmas, this requires editing both the database
+# and create_inflection_set
+
+# Small note: currently can't do anything about a/an mismatches, but checking for that would be HUGE PAIN
+# Could consider adding vowel checking? Honestly, I don't think it's worth it, but it's a thought
