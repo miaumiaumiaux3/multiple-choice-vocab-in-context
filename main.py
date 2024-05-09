@@ -346,8 +346,6 @@ def main():
                     replacement_lemma = lem
                     break
 
-            print("replacement: ", replacement_inflection)
-
             #capitalize the first letter if the word is the first word in the sentence
             #else it won't be found nor replaced
             if w.word_index == 0:
@@ -370,10 +368,14 @@ def main():
         print("---------------------------------------------\n")
 
         #print the target word's sentence
-        print(f"Correct: {target_word.text}({target_word.ppos}:{target_word.goal_pos_tag}) -> {target_word.sentence}")
-        print(f"Incorrect: {word1.text}({word1.ppos}:{word1.goal_pos_tag}) -> {word1.sentence}")
-        print(f"Incorrect: {word2.text}({word2.ppos}:{word2.goal_pos_tag}) -> {word2.sentence}")
-        print(f"Incorrect: {word3.text}({word3.ppos}:{word3.goal_pos_tag}) -> {word3.sentence}")
+        print(f'''Correct: {target_word.original_word} -> {target_word.text}({target_word.ppos}:{target_word.goal_pos_tag})
+            ->> {target_word.sentence}''')
+        print(f'''Incorrect: {word1.original_word} -> {word1.text}({word1.ppos}:{word1.goal_pos_tag}) 
+            -> {word1.sentence}''')
+        print(f'''Incorrect: {word2.original_word} -> {word2.text}({word2.ppos}:{word2.goal_pos_tag}) 
+            -> {word2.sentence}''')
+        print(f'''Incorrect: {word3.original_word} -> {word3.text}({word3.ppos}:{word3.goal_pos_tag}) 
+            -> {word3.sentence}''')
 
 
     # Handle errors
