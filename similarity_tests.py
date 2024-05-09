@@ -2,8 +2,7 @@ import sqlite3
 import spacy
 
 
-
-target_word = "testing"
+target_word = "carving"
 
 language = "English"
 filename = 'sowpods'
@@ -67,9 +66,9 @@ try:
         cursor.close()
         exit()
 
-    #If the word is not the lemma, change the word to the lemma
-    if result[1]:
-        target_word = result[1]
+    # #If the word is not the lemma, change the word to the lemma
+    # if result[1]:
+    #     target_word = result[1]
 
     if result[2]:
         ppos = result[2]
@@ -111,7 +110,7 @@ try:
         pos_queries += f" OR ppos = '{char}' "
 
     query = f'''SELECT word, ppos FROM {language}Dictionary 
-            WHERE isOOV = 0 AND lemma is NULL AND hasVector = 1
+            WHERE isLemma = 1 AND hasVector = 1
             AND (ppos = '{ppos}'{pos_queries}) AND word != '{target_word}';
             '''
 
