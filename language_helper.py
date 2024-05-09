@@ -12,6 +12,7 @@ class WordInfo:
         self.inflections = set()
         self.sentence = ""
         self.goal_pos_tag = ""
+        self.word_index = -1
 
 
 class LanguageInfo:
@@ -37,18 +38,18 @@ class LanguageInfo:
             print('Language not supported')
             exit()
 
-    def generate_sentence(self, target_word) -> str:
+    def generate_sentence(self, word) -> str:
         if self.name == "English":
             if not self.model_already_initialized:
                 self.model = gen_en.load_model()
                 self.model_already_initialized = True
-            generated_sentence = gen_en.generate_sample_sentence(self.model, target_word)
+            generated_sentence = gen_en.generate_sample_sentence(self.model, word)
 
         elif self.name == "Polish":
             if not self.model_already_initialized:
                 self.model = gen_pl.load_model()
                 self.model_already_initialized = True
-            generated_sentence = gen_pl.generate_sample_sentence(self.model, target_word)
+            generated_sentence = gen_pl.generate_sample_sentence(self.model, word)
 
         else:
             print('Language not supported')
