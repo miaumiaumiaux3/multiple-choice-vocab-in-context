@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero">
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="updated to work with new database, now includes &quot;original_word&quot;">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/generate_sentence_en.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_en.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate_sentence_pl.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_pl.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/language_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/language_helper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inflection_intersection.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/inflection_intersection.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -19,8 +19,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Jupyter Notebook" />
         <option value="Python Script" />
+        <option value="Jupyter Notebook" />
       </list>
     </option>
   </component>
@@ -33,14 +33,12 @@
     &quot;assignee&quot;: &quot;miaumiaumiaux3&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">
-    <option name="selectedUrlAndAccountId">
-      <UrlAndAccount>
-        <option name="accountId" value="44f5c4ad-0f3b-4214-a19c-956a18e85f9e" />
-        <option name="url" value="https://github.com/miaumiaumiaux3/multiple-choice-vocab-in-context.git" />
-      </UrlAndAccount>
-    </option>
-  </component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/miaumiaumiaux3/multiple-choice-vocab-in-context.git",
+    "accountId": "44f5c4ad-0f3b-4214-a19c-956a18e85f9e"
+  }
+}]]></component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -81,7 +79,7 @@
   }
 }</component>
   <component name="RunManager" selected="Python.main">
-    <configuration name="generate_sentence_en" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="create_database" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="multiple-choice-vocab-in-context" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -94,7 +92,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/generate_sentence_en.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/create_database.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -194,17 +192,17 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.main_test" />
         <item itemvalue="Python.similarity_tests" />
+        <item itemvalue="Python.create_database" />
+        <item itemvalue="Python.main_test" />
         <item itemvalue="Python.generate_sentence_pl" />
-        <item itemvalue="Python.generate_sentence_en" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-df623cec81eb-c6172f9078bd-com.jetbrains.pycharm.ds.sharedIndexes.bundled-DS-233.15026.16" />
+        <option value="bundled-python-sdk-559ba0cadc45-1e0160e1c7f0-com.jetbrains.pycharm.ds.sharedIndexes.bundled-DS-241.15989.62" />
       </set>
     </attachedChunks>
   </component>
@@ -221,20 +219,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Attempting to use huggingface pipelines to generate sentences from a command prompt. It's a battle that we haven't won yet x_x" />
-    <MESSAGE value="ok, comparing multiple models for both polish and english sentence generation and I think we have our current winners. I'm suddenly a huge fan of quantization" />
-    <MESSAGE value="renamed file and testing to see if we can get the github preview to work" />
-    <MESSAGE value="ok cool, github preview only works if I clear all the outputs, but well... at least it works and I can put sample outputs in markdowns anyways so whatevs" />
-    <MESSAGE value="formatting" />
-    <MESSAGE value="formatting again" />
-    <MESSAGE value="putting tests from main.py into seperate jupyter notebook so that main can become the stage for the actual program instead of a big blob of tests" />
-    <MESSAGE value="beginning to properly set up main.py and adding word game dictionaries" />
-    <MESSAGE value="updates, adding morfeusz" />
-    <MESSAGE value="small updates to inflection_intersection.ipynb, added some polish tests for prep" />
-    <MESSAGE value="made a seperate notebook just for bielik tests, because things get spicy when you load multiple models at once" />
-    <MESSAGE value="Added English inflection replacement test, it works super duper smooth" />
-    <MESSAGE value="made script that creates an SQL database (SQLite b/c no server requirements), takes about 15 minutes on sowpods.txt, but it's one and done" />
-    <MESSAGE value="fixed typos and cleaned up some small things" />
     <MESSAGE value="made script to check sample similarity scores between one word and all others of similar ppos in dictionary" />
     <MESSAGE value="uploading created database with english dictionary and a bundle of similarity tests" />
     <MESSAGE value="created separate files for generating polish and english sentences" />
@@ -246,6 +230,20 @@
     <MESSAGE value="added sentences to WordInfo to keep them nicely paired" />
     <MESSAGE value="removed unncessary word_index from WordInfo" />
     <MESSAGE value="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero" />
-    <option name="LAST_COMMIT_MESSAGE" value="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero" />
+    <MESSAGE value="changed generate to not have quotes because actually it would sometimes add quotes to a weird which was weird and made the model seem awkwardly sarcastic" />
+    <MESSAGE value="changed constructor for WordInfo because needed to be able to input lemmas from the getgo" />
+    <MESSAGE value="now word choice from db has changed to be more restrictive because now we match form of inputted word as well and hoo boy that was a doozy" />
+    <MESSAGE value="now it repeats! :3&#10;Functional and yet... still wanna debug because there are some strange interactions" />
+    <MESSAGE value="fixed typo" />
+    <MESSAGE value="changed target_word to word in generate_sentence for consistency" />
+    <MESSAGE value="about to do some shenanigans so lets make a savepoint here with git" />
+    <MESSAGE value="changing database to include ALL lemmas, even if the word is a lemma, AND now has a new int/bool isLemma" />
+    <MESSAGE value="changed database to include ALL lemmas, even if the word is a lemma, AND now has a new int/bool isLemma" />
+    <MESSAGE value="added section testing a method to collect all inflections from all lemmas" />
+    <MESSAGE value="re-did database, variables are different, captures all lemmas, has isLemma(T/F) and ppos calculations are significantly more accurate" />
+    <MESSAGE value="updated to work with new database" />
+    <MESSAGE value="updated to work with new database with all lemmas and LOTS of bugs squashed" />
+    <MESSAGE value="updated to work with new database, now includes &quot;original_word&quot;" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated to work with new database, now includes &quot;original_word&quot;" />
   </component>
 </project>
