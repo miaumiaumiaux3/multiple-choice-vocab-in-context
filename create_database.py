@@ -2,6 +2,7 @@ import sqlite3
 import spacy
 import lemminflect
 from lemminflect import getAllLemmas, getInflection, getAllInflections
+from collections.abc import Iterable
 
 
 language = "English" #for now, just testing with english
@@ -26,7 +27,17 @@ if len(wordlist) % 1000 != 0:
     batches += 1
 print(f"Inserting {len(wordlist)} words in {batches} batches of 1000")
 
-def create_eng_ppos(lemma):
+
+def flatten(xs):
+    '''Flattens a list of lists'''
+    for x in xs:
+        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
+            yield from flatten(x)
+        else:
+            yield x
+
+
+def create_eng_ppos(lemmas):
     '''Create English ppos aka 'possible parts of speech' is a combination of all possible POS tags for a word,
     but only combinations of NOUN, VERB, AUX, ADJ, ADV are considered, with one letter each so they can be sorted appropriately
     NOUN = N, PROPER_NOUN = P, VERB = V, AUX = X, ADJ = J, ADV = R
@@ -36,11 +47,17 @@ def create_eng_ppos(lemma):
     ppos = '' #build from empty string
 
     #can't just get all lemmas to get all POS tags because it doesn't work for things like 'dancing', which is a noun and a verb
-    #so we have to get all the inflections and just check those tags and convert them to the appropriate letter(s)
+    #so we have to get all the inflections from all lemmas and just check those tags and convert them to the appropriate letter(s)
 
+    pos_tags = []
     #get all inflections
-    inflections = getAllInflections(lemma, upos=None)
-    pos_tags = list(inflections.keys())
+    for lem in lemmas:
+        inflections = getAllInflections(lem, upos=None)
+        pos_tags.extend(list(inflections.keys()))
+
+    pos_tags = list(set(pos_tags)) #remove duplicates
+
+    #convert to ppos
     if 'JJ' in pos_tags: #JJ is adjective
         ppos += 'J'
     if 'NN' in pos_tags: #NN is noun
@@ -53,8 +70,8 @@ def create_eng_ppos(lemma):
         ppos += 'V'
     # 'AUX' is not a POS tag that appears in "getAllInflections", but it's important to know
     # It only shows up in getAllLemmas(), so we could do an extra check... or... we could just give it manually to the very few lemmas that have it
-    aux_lemmas = ['be', 'have', 'do', 'can', 'could', 'may', 'might', 'will', 'would', 'shall', 'should', 'must', 'ought'] #dare is also on the Lemminflect AUX/MD list, but I don't think it'll cause the same problems as the others
-    if lemma in aux_lemmas:
+    aux_lemmas_set = {'be', 'have', 'do', 'can', 'could', 'may', 'might', 'will', 'would', 'shall', 'should', 'must', 'ought'} #dare is also on the Lemminflect AUX/MD list, but I don't think it'll cause the same problems as the others
+    if aux_lemmas_set.intersection(set(lemmas)): #set math! if something is in both sets, it's got at least one AUX lemma
         ppos += 'X'
 
     if ppos != '':
@@ -77,14 +94,18 @@ def insert_words_into_db(query_list):
     print(f"Inserted and committed {len(query_list)} rows into db.\nLast entry was: {query_list[-1]}")
 
 
-def build_query(word_doc, lem, ppos, OOV, hasvec):
+def build_query(word_doc, all_lems, ppos, OOV, hasvec, is_lemma):
     '''Build the query to insert a word into the database'''
     #convert lem and ppos to strings surrounded by '' for SQL, or NULL if they are None
-    lem = f"'{lem}'" if lem else 'NULL'
+    if not all_lems:
+        all_lems = 'NULL'
+    else:
+        all_lems = ' '.join(all_lems) #convert list to string with spaces between lemmas
+        all_lems = f"'{all_lems}'"
     ppos = f"'{ppos}'" if ppos else 'NULL'
 
-    query = f'''INSERT INTO {language}Dictionary (word, lemma, ppos, isOOV, hasVector) VALUES ('{word_doc.text}', {lem}, {ppos}, {OOV}, {hasvec});'''
-    #print(f"Created query for: {word_doc.text}, {lem}, {ppos}, {OOV}, {hasVector}") #effectively a loading screen to show all inserts for funsies/debugging
+    query = f'''INSERT INTO {language}Dictionary (word, lemma, ppos, isOOV, hasVector, isLemma) VALUES ('{word_doc.text}', {all_lems}, {ppos}, {OOV}, {hasvec}, {is_lemma});'''
+    #print(f"Created query for: {word_doc.text}, {lem}, {ppos}, {OOV}, {hasVector}, {is_lemma}") #effectively a loading screen to show all inserts for funsies/debugging
     return query
 
 
@@ -97,25 +118,29 @@ def insert_dictionary_into_db(wordlist, language):
         for word in wordlist:
             word_doc = nlp(word)
             hasvec = 1 if word_doc.has_vector else 0
-            #lem = word_doc.lemma_ #should work for any language in spacy, but we need to do an OOV lemminflect check
             OOV = 0
             ppos = None
-            main_lem = None
-            lems = list(getAllLemmas(word, upos = None).values())
+            is_lemma = 0
+            lemma_mess = list(getAllLemmas(word, upos = None).values())
+            lemmas = []
+            for tup in lemma_mess:
+                for lem in tup:
+                    lemmas.append(lem)
+
+            lemmas = list(set(lemmas)) #remove duplicates
 
             #if no lemmas, then it's OOV and our work is done, if there are, we grab the first one and create the ppos
-            if not lems:
+            if not lemmas:
                 OOV = 1
             else:
-                main_lem = lems[0][0]
-                ppos = create_eng_ppos(main_lem)
+                ppos = create_eng_ppos(lemmas)
 
-            #if the word is already the lemma, the lemma needs to be reset to "NULL" in the database instead
-            if word == main_lem:
-                main_lem = None
+            #if the word is already the lemma, then is_lemma will be TRUE/1
+            if word in lemmas:
+                is_lemma = 1
 
             #build query and add to list
-            query_list.append(build_query(word_doc, main_lem, ppos, OOV, hasvec))
+            query_list.append(build_query(word_doc, lemmas, ppos, OOV, hasvec, is_lemma))
 
             if len(query_list) == 1000 or word == wordlist[-1]: #batch insert every 1000 queries, or if it's the last word
                 insert_words_into_db(query_list) #insert fully built entries into database
@@ -150,13 +175,15 @@ try:
     print('SQLite Version is {}'.format(result))
 
     # Create a table in the database, VARCHAR(6) for ppos because the longest possible ppos right now is 5 characters long, but what if...?
+    #lemmas shouldn't be more than double or MAX triple size plus a little extra for spaces, but tbh not worth counting, let it be TEXT
     # SQLite doesn't have BIT nor BOOLEAN, INTEGER is the accepted way to store boolean values
     query = f'''CREATE TABLE IF NOT EXISTS {language}Dictionary (
         word VARCHAR({max_value}) PRIMARY KEY,
-        lemma VARCHAR({max_value}),
+        lemma TEXT,
         ppos VARCHAR(6),
         isOOV INTEGER,
-        hasVector INTEGER
+        hasVector INTEGER,
+        isLemma INTEGER
     );'''
 
     # Execute the query to create the (empty) table
