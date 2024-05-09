@@ -5,11 +5,12 @@ import spacy
 
 
 class WordInfo:
-    def __init__(self, word, lemma ="", ppos = ""):
+    def __init__(self, word, lemmas=[], ppos=""):
         self.text = word
-        self.lemma = lemma
+        self.original_word = word
+        self.lemmas = lemmas
         self.ppos = ppos
-        self.inflections = set()
+        self.inflections = {} #set
         self.sentence = ""
         self.goal_pos_tag = ""
         self.word_index = -1
