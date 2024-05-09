@@ -32,9 +32,9 @@ def clean_sentence(sentence):
     return word_list
 
 
-def get_word_info(word, language, cursor):
+def get_word_info(word, desired_language, cursor):
     '''Get target word's info from the database'''
-    query = f'''SELECT * FROM {language}Dictionary WHERE word = '{word}';'''
+    query = f'''SELECT * FROM {desired_language}Dictionary WHERE word = '{word}';'''
     cursor.execute(query)
     result = cursor.fetchone() #if no result, returns None, otherwise tuple of the full row
 
@@ -47,12 +47,27 @@ def get_word_info(word, language, cursor):
 #     print(word_inflections)
 #     return set(flatten(list(word_inflections.values())))
 
+# def create_inflection_set(word):
+#     '''Get all inflections with lemminflect and return them as a flattened list'''
+#
+#     word_inflections = getAllInflections(word.lemma, upos=None)
+#     print(word_inflections)
+#     inflection_set = set(flatten(list(word_inflections.values())))
+#     word.inflections = inflection_set
+
 def create_inflection_set(word):
-    '''Get all inflections with lemminflect and return them as a flattened list'''
-    word_inflections = getAllInflections(word.lemma, upos=None)
-    print(word_inflections)
-    inflection_set = set(flatten(list(word_inflections.values())))
-    word.inflections = inflection_set
+    '''Get all inflections from all lemmas with lemminflect and set them in the object'''
+    all_inflections = []
+    for lem in word.lemmas:
+        inflections = getAllInflections(lem, upos=None) #returns dict of {pos_tag: (inflection1, inflection2, ...)}
+        all_inflections.append(inflections)
+
+    combined_inflection_list = []
+    for inflections in all_inflections:
+        combined_inflection_list.extend(flatten(list(inflections.values())))
+
+    word.inflections = set(combined_inflection_list)
+
 
 def find_inflection_in_sentence(word, sentence) -> bool:
     '''Clean the sentence and check if any of the inflections are in current generated sentence
@@ -161,16 +176,18 @@ def main():
         # Check if the target word is in the database and get its info
         result = get_word_info(target_word.text, language.name, cursor)
         print(f"Target word info: {result}")
+        #(word, lemma, ppos, hasVector, isLemma)
+        #(str, str, str, int, int)
 
         if not result:
             print("Target word not found in database, please pick another word." + "\n" + "-" * 13)
             main()
 
-        if result[1]: #lemma is the 2nd column
-            target_word.lemma = result[1]
-        else:
-            print("Word is already the lemma")
-            target_word.lemma = target_word.text
+        if result[1]: #lemmas are in the second column
+            target_word.lemmas = result[1].split() #split string of lemmas into list
+
+        if result[4]: #is_lemma is the 5th column
+            print("Word is a lemma")
 
         if result[2]: #ppos is the 3rd column
             target_word.ppos = result[2]
@@ -178,7 +195,7 @@ def main():
             print("Word has no relevant POS tag in lemminflect, please pick another word." + "\n" + "-" * 13)
             main()
 
-        if not result[4]: #hasVector is the 5th column
+        if not result[3]: #hasVector is the 5th column
             print("Word has no vector in spaCy, please pick another word." + "\n" + "-" * 13)
             main()
 
@@ -197,26 +214,32 @@ def main():
 
 
         # #Medium inclusive, include exact matches, and for each letter, include the "pure" matching words
-        # pos_queries = ''
+        # word_logic = ''
         # for char in target_word.ppos:
-        #     pos_queries += f" OR ppos = '{char}' "
+        #     word_logic += f" OR ppos = '{char}' "
         #
 
         # Almost exclusive:
         # Include only exact ppos matches and "pure" base form of the target_word.goal_pos_tag
+        word_logic = f" AND (ppos = '{target_word.ppos}'"
         pos_base = target_word.goal_pos_tag[0]
-        pos_queries = f" OR ppos = '{pos_base}'" if pos_base != target_word.ppos else ''
+        word_logic += f" OR ppos = '{pos_base}'" if pos_base != target_word.ppos else ''
+        word_logic += ')'
+        # And exclude the target word from the results
+        for lem in target_word.lemmas:
+            word_logic += f" AND word != '{lem}'"
 
         #We'll grab 42 because it's just as fast to get 1 random word (or 100, or more, if we want higher avg similarity)
-        query = f'''SELECT word, ppos FROM {language.name}Dictionary 
-                WHERE isOOV = 0 AND lemma is NULL AND hasVector = 1
-                AND (ppos = '{target_word.ppos}'{pos_queries}) AND word != '{target_word.lemma}'
+        query = f'''SELECT word, ppos, lemmas FROM {language.name}Dictionary 
+                WHERE isLemma = 1 AND hasVector = 1
+                {word_logic}
                 ORDER BY RANDOM() LIMIT 42;
                 '''
 
         print(query)
         cursor.execute(query)
         result = cursor.fetchall() #list of tuples (word, ppos)
+        print("Results:", result[:5])
 
         #####################################
         #Close the poor SQLite connection, we don't need it anymore
@@ -228,11 +251,11 @@ def main():
         #This should result in a slightly more balanced set of words that are still definitely and distinctly different from the target word
 
         #first order by similarity, deleting any that are over 0.5, then grab the top 3
-        # only compare lemmas to lemmas!
+        #only making similarity comparisons to the original word (because there could be more than one lemma)
         dict_words = {}
         for r in result:
-            print(r[0], r[1], target_word.lemma, language.nlp(r[0]).similarity(language.nlp(target_word.lemma)))
-            simp = language.nlp(r[0]).similarity(language.nlp(target_word.lemma))
+            print(r[0], r[1], target_word.original_word, language.nlp(r[0]).similarity(language.nlp(target_word.original_word)))
+            simp = language.nlp(r[0]).similarity(language.nlp(target_word.original_word))
             if simp < 0.5:
                 dict_words[r] = simp
 
@@ -262,9 +285,9 @@ def main():
         print("Chosen words:", chosen_words)
 
         # # Can use this instead of choosing words at all if you don't care about mirroring inflection with target word
-        # word1 = lang.WordInfo(top_words[0][0], lemma=top_words[0][0], ppos=top_words[0][1])
-        # word2 = lang.WordInfo(top_words[1][0], lemma=top_words[1][0], ppos=top_words[1][1])
-        # word3 = lang.WordInfo(top_words[2][0], lemma=top_words[2][0], ppos=top_words[2][1])
+        # word1 = lang.WordInfo(top_words[0][0], lemmas=top_words[0][0], ppos=top_words[0][1])
+        # word2 = lang.WordInfo(top_words[1][0], lemmas=top_words[1][0], ppos=top_words[1][1])
+        # word3 = lang.WordInfo(top_words[2][0], lemmas=top_words[2][0], ppos=top_words[2][1])
 
 
         if len(chosen_words) < 3:
@@ -281,14 +304,14 @@ def main():
                 top_words.insert(0, c)
 
             # Create new word objects for the top 3 words, intializing them with their text and ppos
-            word1 = lang.WordInfo(top_words[0][0], lemma=top_words[0][0], ppos=top_words[0][1])
-            word2 = lang.WordInfo(top_words[1][0], lemma=top_words[1][0], ppos=top_words[1][1])
-            word3 = lang.WordInfo(top_words[2][0], lemma=top_words[2][0], ppos=top_words[2][1])
+            word1 = lang.WordInfo(top_words[0][0], lemmas=top_words[0][2].split(), ppos=top_words[0][1])
+            word2 = lang.WordInfo(top_words[1][0], lemmas=top_words[1][2].split(), ppos=top_words[1][1])
+            word3 = lang.WordInfo(top_words[2][0], lemmas=top_words[2][2].split(), ppos=top_words[2][1])
         else:
             #Create new word objects for the chosen words, intializing them with their text and ppos
-            word1 = lang.WordInfo(chosen_words[0][0], lemma=chosen_words[0][1][0], ppos=chosen_words[0][1][1])
-            word2 = lang.WordInfo(chosen_words[1][0], lemma=chosen_words[1][1][0], ppos=chosen_words[1][1][1])
-            word3 = lang.WordInfo(chosen_words[2][0], lemma=chosen_words[2][1][0], ppos=chosen_words[2][1][1])
+            word1 = lang.WordInfo(chosen_words[0][0], lemmas=chosen_words[0][1][2].split(), ppos=chosen_words[0][1][1])
+            word2 = lang.WordInfo(chosen_words[1][0], lemmas=chosen_words[1][1][2].split(), ppos=chosen_words[1][1][1])
+            word3 = lang.WordInfo(chosen_words[2][0], lemmas=chosen_words[2][1][2].split(), ppos=chosen_words[2][1][1])
 
 
 
@@ -298,7 +321,7 @@ def main():
         #Get and set all inflections of our words
         for w in top3_wordlist:
             create_inflection_set(w)
-            print(f"Inflections of {w.lemma}: {w.inflections}")
+            print(f"Inflections of {w.lemmas}: {w.inflections}")
 
 
         #Generate sentences for the 3 random words, one at a time
@@ -313,15 +336,25 @@ def main():
 
         for w in top3_wordlist:
             #replace the word with the inflected target word
-            replacement = getInflection(target_word.lemma, tag = w.goal_pos_tag)[0]
+            replacement_inflection = ''
+            replacement_lemma = ''
+            for lem in target_word.lemmas:
+                replacement = getInflection(lem, tag=w.goal_pos_tag, inflect_oov=False)
+                if replacement:
+                    "Replacement inflection found!"
+                    replacement_inflection = replacement[0]
+                    replacement_lemma = lem
+                    break
+
+            print("replacement: ", replacement_inflection)
 
             #capitalize the first letter if the word is the first word in the sentence
             #else it won't be found nor replaced
             if w.word_index == 0:
-                replacement = replacement.capitalize()
+                replacement_inflection = replacement_inflection.capitalize()
 
-            w.sentence = w.sentence.replace(w.text, replacement)
-            print(f"Replacement: {w.text}({w.goal_pos_tag}) -> {replacement}")
+            w.sentence = w.sentence.replace(w.text, replacement_inflection)
+            print(f"Replacement: {w.text}({w.goal_pos_tag}) -> {replacement_inflection} <<<{replacement_lemma}>>>")
             print(f"New sentence: {w.sentence}")
 
         #Create the final wordlist and shuffle it
@@ -378,8 +411,15 @@ else:
 
 
 ###########Current known issues############
-# we need to actually get ALL lemmas and all inflections of all lemmas, this requires editing both the database
-# and create_inflection_set
 
 # Small note: currently can't do anything about a/an mismatches, but checking for that would be HUGE PAIN
 # Could consider adding vowel checking? Honestly, I don't think it's worth it, but it's a thought
+
+
+# racoon - raccoon problem
+# Generated sentence with racoon:  A mischievous raccoon rummaged through a campsite, searching for food scraps and shiny objects, much to the frustration of unsuspecting campers.
+# No appropriate inflection found in sentence, regenerating
+# Generated sentence with racoon:  A mischievous raccoon rummaged through campers' trash cans late at night, stealing food and shiny objects, much to the frustration of unsuspecting campers.
+# No appropriate inflection found in sentence, regenerating
+
+
