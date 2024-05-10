@@ -99,7 +99,9 @@ def set_word_position_and_goal_pos_tag(word, sentence) -> int:
 
     for token in doc:
         #if the token is the target word and not a proper noun
-        if token.text == word.text and token.pos_ != "PROPN":
+        # if token.text == word.text and token.pos_ != "PROPN": #old check, generates fewer sentences and usually works fine
+        if token.text == word.text and token.pos_ != "PROPN" and token.tag_[0] in list(word.ppos):
+        #regens sentence in cases where the word in the sentence is in a form that can't be inflected to the target word's pos tag
             #store the goal pos tag and index for the target word
             word.goal_pos_tag = token.tag_
             word.index = token.i
@@ -223,7 +225,8 @@ def main():
         # Include only exact ppos matches and "pure" base form of the target_word.goal_pos_tag
         word_logic = f" AND (ppos = '{target_word.ppos}'"
         pos_base = target_word.goal_pos_tag[0]
-        word_logic += f" OR ppos = '{pos_base}'" if pos_base != target_word.ppos else ''
+        if pos_base != target_word.ppos and pos_base in list(target_word.ppos):
+            word_logic += f" OR ppos = '{pos_base}'"
         word_logic += ')'
         # And exclude the target word from the results
         for lem in target_word.lemmas:
@@ -346,6 +349,11 @@ def main():
                     replacement_lemma = lem
                     break
 
+            #if no inflection found... weird failsafe time...
+            if not replacement_inflection:
+                "No replacement inflection found, going OOV. Weird errors likely."
+                replacement_inflection = getInflection(w.original_word, tag=w.goal_pos_tag)[0] #w.original_word is always a lemma
+
             #capitalize the first letter if the word is the first word in the sentence
             #else it won't be found nor replaced
             if w.word_index == 0:
@@ -411,17 +419,67 @@ else:
     print("Goodbye!")
     exit()
 
-
+#####################################################################
 ###########Current known issues############
 
 # Small note: currently can't do anything about a/an mismatches, but checking for that would be HUGE PAIN
 # Could consider adding vowel checking? Honestly, I don't think it's worth it, but it's a thought
 
 
-# racoon - raccoon problem
+# racoon - raccoon problem (infinite loop because it can never find it because it "corrects" the spelling)
+
 # Generated sentence with racoon:  A mischievous raccoon rummaged through a campsite, searching for food scraps and shiny objects, much to the frustration of unsuspecting campers.
 # No appropriate inflection found in sentence, regenerating
 # Generated sentence with racoon:  A mischievous raccoon rummaged through campers' trash cans late at night, stealing food and shiny objects, much to the frustration of unsuspecting campers.
 # No appropriate inflection found in sentence, regenerating
 
 
+
+# NV -> JJ problem (possibly solved? Though likely will lead to more regeneration of sentences, and longer runtimes)
+
+# "Ran" is a NV -> VERB, but the word "enlarged" ended up as a JJ adjective, which impossible for run to inflect to
+# So why did "enlarge" not have J as part of its ppos and get excluded from the initial search? how did it get all the way to the end?
+
+# In which sentence is a form of the word ran most correctly used?
+# -  Yesterday, after finishing her errands, Sarah hurriedly ran to catch the bus before it departed.
+# *****-  The doctor showed me the X-ray with the  image of my injured bone to explain the extent of the damage.******
+# ---------------------------------------------
+#
+# Correct: ran -> ran(NV:VBD)
+# ->>  Yesterday, after finishing her errands, Sarah hurriedly ran to catch the bus before it departed.
+# ********* Incorrect: enlarged -> enlarged(V:JJ)
+# ->  The doctor showed me the X-ray with the  image of my injured bone to explain the extent of the damage.
+
+############.... x_x Time to make a failsafe until I figure out a better way to handle this??? ############
+#Running is totes a JJ, except I thought gerunds could "never" be adjectives, but I guess they can be? I'm so confused
+
+# In which sentence is a form of the word ran most correctly used?
+# -  The real estate agent led us through the empty,  house, describing its potential as our eyes scanned the dusty, forgotten corners.
+# -  Upon learning the unexpected news, the entire room fell silent as everyone present stared at each other in  disbelief.
+# -  The area around the abandoned carnival seemed rather  with its peeling paint, dilapidated rides, and ominous silence, making some visitors feel uneasy and reluctant to explore further.
+# -  Yesterday, after finishing her errands in town, Sarah quickly changed into running shoes and went for a invigorating run through the park.
+# ---------------------------------------------
+#
+# Correct: ran -> running(NV:JJ)
+# ->>  Yesterday, after finishing her errands in town, Sarah quickly changed into running shoes and went for a invigorating run through the park.
+# Incorrect: aghast -> aghast(J:JJ)
+# ->  Upon learning the unexpected news, the entire room fell silent as everyone present stared at each other in  disbelief.
+# Incorrect: sketchy -> sketchy(J:JJ)
+# ->  The area around the abandoned carnival seemed rather  with its peeling paint, dilapidated rides, and ominous silence, making some visitors feel uneasy and reluctant to explore further.
+# Incorrect: vacant -> vacant(J:JJ)
+# ->  The real estate agent led us through the empty,  house, describing its potential as our eyes scanned the dusty, forgotten corners.
+
+# Apparently "powwow" is a NV which can also become a J x_x Awesome. It didn't even replace the word.
+# Correct: ran -> run(NV:VB)
+# ->>  Yesterday, my dog chased after a squirrel in the park and really gave it his all when he finally managed to run and catch it.
+# Incorrect: powwow -> powwow(NV:JJ)
+# ->  Every summer, our community comes together for a vibrant powwow celebration filled with traditional music, dancing, and stories passed down through generations.
+
+
+# thought the error continues, small bug fix helped for some cases
+# fascinated -> fascinated(V:JJ)
+# Target word info: ('fascinated', 'fascinate', 'V', 1, 0)
+# Inflections of the target word 'fascinated': {'fascinates', 'fascinate', 'fascinated', 'fascinating'}
+# Llama.generate: prefix-match hit
+# Generated sentence with fascinated:  I was absolutely fascinated by the ancient ruins and intricate carvings we discovered during our expedition in the jungle.
+# fascinated with pos: JJ found at index: 4
