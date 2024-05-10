@@ -536,3 +536,4 @@ else:
 # we can add it to a table that stores inflections and their POS tags, and also update the ppos tag when relevant.
 # that could also be a way to address spelling weirdness, too, like with raccoon - racoon
 # add inflections of both to both of their entries, make them interchangable
+# we'll see if I have time for that, sounds fun tho ngl

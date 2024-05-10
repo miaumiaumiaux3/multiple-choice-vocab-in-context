@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="potential solve for the (NV-&gt;J) problem, though in return there is potential for longer runtimes and more sentence regeneration, probably a worthwhile tradeoff">
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="NV-&gt;J &quot;solve&quot; can cause multi-minute delay in results due to massive number of regenerations. Solutions would require fixing the discrepancy between spaCy and lemminflect's pos identifiers. Might revert the change and have &quot;worse&quot; sentences sometimes as a tradeoff, not sure. Might also just leave it and idk fork lemminflect or expand my database and make my own inflector...&#10;Actually that isn't a bad idea...">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inflection_intersection.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/inflection_intersection.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -217,8 +216,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="trying to clean up main.py and the chaos in my mind by using a few helper classes in language_helper.py" />
-    <MESSAGE value="I keep messing with WordInfo because I keep needed more things. I feel like it should be a struct. I don't think python has those though" />
     <MESSAGE value="major progress in main.py, in the middle of debugging some stuff but it's REALLY CLOSE to having actual samples of some english multiple choice questions!" />
     <MESSAGE value="added sentences to WordInfo to keep them nicely paired" />
     <MESSAGE value="removed unncessary word_index from WordInfo" />
@@ -242,6 +239,8 @@
     <MESSAGE value="tbh I have no idea why these files have so many changes all the time, DataSpell be like that so yeah sure why not back it up too just in case" />
     <MESSAGE value="formatting changes to the results" />
     <MESSAGE value="potential solve for the (NV-&gt;J) problem, though in return there is potential for longer runtimes and more sentence regeneration, probably a worthwhile tradeoff" />
-    <option name="LAST_COMMIT_MESSAGE" value="potential solve for the (NV-&gt;J) problem, though in return there is potential for longer runtimes and more sentence regeneration, probably a worthwhile tradeoff" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;main.py" />
+    <MESSAGE value="NV-&gt;J &quot;solve&quot; can cause multi-minute delay in results due to massive number of regenerations. Solutions would require fixing the discrepancy between spaCy and lemminflect's pos identifiers. Might revert the change and have &quot;worse&quot; sentences sometimes as a tradeoff, not sure. Might also just leave it and idk fork lemminflect or expand my database and make my own inflector...&#10;Actually that isn't a bad idea..." />
+    <option name="LAST_COMMIT_MESSAGE" value="NV-&gt;J &quot;solve&quot; can cause multi-minute delay in results due to massive number of regenerations. Solutions would require fixing the discrepancy between spaCy and lemminflect's pos identifiers. Might revert the change and have &quot;worse&quot; sentences sometimes as a tradeoff, not sure. Might also just leave it and idk fork lemminflect or expand my database and make my own inflector...&#10;Actually that isn't a bad idea..." />
   </component>
 </project>
