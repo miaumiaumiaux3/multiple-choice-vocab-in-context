@@ -100,13 +100,16 @@ def set_word_position_and_goal_pos_tag(word, sentence) -> int:
     for token in doc:
         #if the token is the target word and not a proper noun
         # if token.text == word.text and token.pos_ != "PROPN": #old check, generates fewer sentences and usually works fine
-        if token.text == word.text and token.pos_ != "PROPN" and token.tag_[0] in list(word.ppos):
-        #regens sentence in cases where the word in the sentence is in a form that can't be inflected to the target word's pos tag
+        if token.text == word.text and token.pos_ != "PROPN":
+            if token.tag_[0] not in list(word.ppos): #if the word in the sentence is in a form that can be inflected to the target word's pos tag
+                print(f"Cannot make inflection from {token.text}<{word.lemmas[0]}({word.ppos}) to ({token.tag_})")
+                return -1 #regen sentence
             #store the goal pos tag and index for the target word
             word.goal_pos_tag = token.tag_
             word.index = token.i
             print(f"{word.text} with pos: {word.goal_pos_tag} found at index: {word.index}")
             return token.i
+    print("Target word not found in sentence")
     return -1
 
 
@@ -114,6 +117,9 @@ def generate_sentence_with_inflection(word):
     '''Generate a sentence with the target word inflected in it
     Make sure the sentence contains a registered inflection of the target word, if not, repeat the process
     '''
+
+    #reset to the original_word
+    word.text = word.original_word
 
     #Generate a sentence with the target word with LLM
     generated_sentence = language.generate_sentence(word.text)
@@ -126,7 +132,7 @@ def generate_sentence_with_inflection(word):
 
     #Make sure the word in the sentence is not a proper noun, assign its index and goal pos tag to WordInfo object
     elif set_word_position_and_goal_pos_tag(word, generated_sentence) == -1:
-        print("Target word not found in sentence, regenerating")
+        print("Unable to set word position and goal_pos_tag, regenerating")
         generate_sentence_with_inflection(word)
 
     else:
@@ -134,7 +140,6 @@ def generate_sentence_with_inflection(word):
         #Add the sentence to the WordInfo object for safe-keeping!
         word.sentence = generated_sentence
         print("Appropriate inflection found in sentence!")
-        print(f"Target word-sentence pair: {word.text} -> {word.sentence}")
 
 
 
@@ -207,6 +212,7 @@ def main():
 
         # Generate sentence from target word, run all checks in the process
         generate_sentence_with_inflection(target_word)
+        print(f"Target word-sentence pair: {target_word.text} -> {target_word.sentence}")
 
 
         ################################################################################
@@ -278,7 +284,7 @@ def main():
             valid_word = getInflection(top_words[i][0], tag=target_word.goal_pos_tag, inflect_oov=False)
             print(i, top_words[i][0], "valid_word>>>", valid_word)
 
-            # if we got past the fail-safes, we can add the word to the chosen words, and reset valid_word
+            # if we got past the fail-safes, we can add the inflected word to the chosen words, and reset valid_word
             if valid_word:
                 chosen_words.append((valid_word[0], top_words[i]))
                 valid_word = ''
@@ -294,7 +300,7 @@ def main():
 
 
         if len(chosen_words) < 3:
-            # Failsafe if chosen words do not match inflection
+            # Failsafe if chosen words do not match inflection (catches very rare cases)
             #   like with "carving" where lemminflect doesn't believe it can be a verb,
             #   but spaCy does, so they fight and no one wins
             print("Not enough chosen words, reverting to default top 3 words")
@@ -378,11 +384,11 @@ def main():
         #print the target word's sentence
         print(f'''Correct: {target_word.original_word} -> {target_word.text}({target_word.ppos}:{target_word.goal_pos_tag})
             ->> {target_word.sentence}''')
-        print(f'''Incorrect: {word1.original_word} -> {word1.text}({word1.ppos}:{word1.goal_pos_tag}) 
+        print(f'''Incorrect: {word1.lemmas[0]} -> {word1.text}({word1.ppos}:{word1.goal_pos_tag}) 
             -> {word1.sentence}''')
-        print(f'''Incorrect: {word2.original_word} -> {word2.text}({word2.ppos}:{word2.goal_pos_tag}) 
+        print(f'''Incorrect: {word2.lemmas[0]} -> {word2.text}({word2.ppos}:{word2.goal_pos_tag}) 
             -> {word2.sentence}''')
-        print(f'''Incorrect: {word3.original_word} -> {word3.text}({word3.ppos}:{word3.goal_pos_tag}) 
+        print(f'''Incorrect: {word3.lemmas[0]} -> {word3.text}({word3.ppos}:{word3.goal_pos_tag}) 
             -> {word3.sentence}''')
 
 
@@ -421,9 +427,12 @@ else:
 
 #####################################################################
 ###########Current known issues############
+#####################################################################
 
 # Small note: currently can't do anything about a/an mismatches, but checking for that would be HUGE PAIN
 # Could consider adding vowel checking? Honestly, I don't think it's worth it, but it's a thought
+# Could also consider using spaCy to check if the word before is an article,
+# or just an a/an check?
 
 
 # racoon - raccoon problem (infinite loop because it can never find it because it "corrects" the spelling)
@@ -436,6 +445,36 @@ else:
 
 
 # NV -> JJ problem (possibly solved? Though likely will lead to more regeneration of sentences, and longer runtimes)
+
+# fascinated -> fascinated(V:JJ) problem....
+# basically the sentence generator sometimes gets caught in a loop and takes FOREVER (sometimes literally)
+# to generate a sentence where fascinated is used as a verb(V), not an adjective(J)
+
+# Correct: fascinated -> fascinated(V:VBN)
+#             ->>  I've always been fascinated by ancient civilizations and their unique cultures and customs.
+# Incorrect: digressed -> digressed(V:VBD)
+#             ->  During the presentation, the speaker went off on a tangent and unfortunately, the discussion fascinated from the main topic for quite some time, causing confusion among the audience.
+# Incorrect: reformulated -> reformulate(V:VB)
+#             ->  After extensive feedback from customers, the company chose to fascinate their product to better meet the evolving needs and preferences of its market.
+# Incorrect: infuriated -> infuriated(V:VBD)
+#             ->  The traffic congestion on the highway fascinated the commuters, causing many to honk their horns in frustration and rage.
+# *************Runtime: 0:03:29.875000***************
+
+# Correct: fascinated -> fascinated(V:VBN)
+# ->>  I've always been fascinated by ancient civilizations and their unique cultures, art, and architectural achievements.
+# Incorrect: distended -> distended(V:VBN)
+# ->  After consuming an excessive amount of gas-producing foods, my friend's face became temporarily fascinated due to the bloating in his stomach.
+# Incorrect: assassinated -> assassinated(V:VBN)
+# ->  The unsolved mystery surrounding the death of Archduke Franz Ferdinand of Austria-Hungary in Sarajevo on June 28, 1914, is often cited as the spark that ignited World War I, as he was infamously fascinated by Gavrilo Princip.
+# Incorrect: categorized -> categorized(V:VBN)
+# ->  The library's collection is meticulously fascinated, making it easy for patrons to find books based on their preferred genres or subjects.
+# *****************Runtime: 0:06:00.110000*************
+
+####### honestly this signals to me that the problem would best be solved by forking Lemminflect
+# and updating it to actually be in line with spaCy's POS tags, but that's a LOT of work
+# can also try varying the prompt randomly? "Write a sentence that begins with the word <word>."?
+# some prompts might handle certain POS better accidentally
+
 
 # "Ran" is a NV -> VERB, but the word "enlarged" ended up as a JJ adjective, which impossible for run to inflect to
 # So why did "enlarge" not have J as part of its ppos and get excluded from the initial search? how did it get all the way to the end?
@@ -476,10 +515,13 @@ else:
 # ->  Every summer, our community comes together for a vibrant powwow celebration filled with traditional music, dancing, and stories passed down through generations.
 
 
-# thought the error continues, small bug fix helped for some cases
+# though the error continues, small bug fix helped for some cases
 # fascinated -> fascinated(V:JJ)
 # Target word info: ('fascinated', 'fascinate', 'V', 1, 0)
 # Inflections of the target word 'fascinated': {'fascinates', 'fascinate', 'fascinated', 'fascinating'}
 # Llama.generate: prefix-match hit
 # Generated sentence with fascinated:  I was absolutely fascinated by the ancient ruins and intricate carvings we discovered during our expedition in the jungle.
 # fascinated with pos: JJ found at index: 4
+
+
+
