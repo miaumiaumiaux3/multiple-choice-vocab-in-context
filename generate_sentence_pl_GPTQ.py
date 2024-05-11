@@ -11,39 +11,37 @@
 import torch
 import warnings
 
-from ctransformers import AutoModelForCausalLM
-from transformers import AutoTokenizer, pipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 
 def load_model():
+    model_id = "speakleash/Bielik-7B-Instruct-v0.1-GPTQ"
+    tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
     model = AutoModelForCausalLM.from_pretrained(
-        "speakleash/Bielik-7B-Instruct-v0.1-GGUF",
-        model_file="bielik-7b-instruct-v0.1.Q4_K_M.gguf", # you can take different quantization resolution from speakleash/Bielik-7B-Instruct-v0.1-GGUF repo
-        model_type="mistral", gpu_layers=50, hf=True
+        model_id,
+        device_map="auto",
+        trust_remote_code=False,
+        revision="main"
     )
-
-    tokenizer = AutoTokenizer.from_pretrained(
-        "speakleash/Bielik-7B-Instruct-v0.1", use_fast=True
-    )
-
     pipe = pipeline(model=model, tokenizer=tokenizer, task='text-generation', return_full_text=False)
+    gptq = True #should this be global?
 
     return pipe
 
-def prompt_model(pipe, human_prompt, temp=0.3) -> str:
+def prompt_model(pipe, human_prompt, temp=0.1) -> str:
     prompt = f"<s>[INST]{human_prompt}[/INST]"
     outputs = pipe(
         prompt,
         max_new_tokens=120,
-        temperature=temp, #0.1 is the default, changing it to 0.5 has given German output
-        do_sample=True, #gives more variety in the output versus greedy decoding
-        top_p=1, #top probability to sample from, default is 1, but 0.95 was reccommended in GPTQ setting, 1 is fine for now
+        do_sample=True,
+        temperature=temp, #0.1 is the default, changing it to .5 leads to... German xD
+        top_p=0.95,
     )
     result = outputs[0]["generated_text"]
     return result.strip(' "\'\t\r\n')
 
 def generate_sample_sentence(pipe, word):
-    built_prompt = f"Napisz zdanie, w którym się pojawia słowo {word}."
+    built_prompt = f"Napisz zdanie, w którym pojawia się słowo {word}."
     result = prompt_model(pipe, built_prompt)
     return result
 
@@ -66,6 +64,7 @@ if __name__ == "__main__":
     print("------------------------------------------------------------")
 
     pipe = load_model()
+    gptq = True
 
     # while True:
     #     human_prompt = input("Enter a prompt:\n")
@@ -76,20 +75,24 @@ if __name__ == "__main__":
     #         exit()
     #     result = prompt_model(pipe, human_prompt)
     #     print(result)
-    #
 
 
+    #Speed test for sample input
     while True:
         #start timer
         start_time = time.monotonic()
-        human_prompt = "Napisz zdanie, w którym się pojawia słowo tańczę"
-        #human_prompt = "Napisz zdanie, w którym znajduje się słowa tańczyć."
-        #human_prompt = "Napisz zdanie, używając słowa tańczyć."
+        human_prompt = "Napisz zdanie, w którym się pojawia słowo taniec"
         result = prompt_model(pipe, human_prompt, temp=0.3)
         print(result)
         #end timer
         end_time = time.monotonic()
         print('Runtime: ' + str(timedelta(seconds=end_time - start_time)))
 
+    # Taniec to jedna z najstarszych form sztuki, wyrażająca radość, miłość i wolność.
+    # Runtime: 0:00:21.641000
+    # Taniec to jedna z najstarszych form sztuki, która wyraża emocje, energię i kreatywność poprzez ruch i muzykę.
+    # Runtime: 0:00:29.187000
+    # Taniec to jedna z najstarszych form sztuki, który łączy w sobie elementy ruchu, muzyki i ekspresji.
+    # Runtime: 0:00:23.703000
 
 

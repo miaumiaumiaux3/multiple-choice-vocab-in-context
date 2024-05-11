@@ -4,9 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="NV-&gt;J &quot;solve&quot; can cause multi-minute delay in results due to massive number of regenerations. Solutions would require fixing the discrepancy between spaCy and lemminflect's pos identifiers. Might revert the change and have &quot;worse&quot; sentences sometimes as a tradeoff, not sure. Might also just leave it and idk fork lemminflect or expand my database and make my own inflector...&#10;Actually that isn't a bad idea...">
+    <list default="true" id="ae292e23-694d-470f-8fa7-66ceb31dccd8" name="Changes" comment="changed polish sentence generator to GGUF because it's WAY faster (23s -&gt; 3.6s)">
+      <change afterPath="$PROJECT_DIR$/generate_sentence_pl_GPTQ.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_sentence_pl.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_sentence_pl.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inflection_intersection.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/inflection_intersection.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polish_sentence_generation_with_bielik.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/polish_sentence_generation_with_bielik.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,8 +21,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="Jupyter Notebook" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -51,54 +56,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.create_database.executor&quot;: &quot;Run&quot;,
-    &quot;Python.generate_sentence_en.executor&quot;: &quot;Run&quot;,
-    &quot;Python.generate_sentence_pl.executor&quot;: &quot;Run&quot;,
-    &quot;Python.llm_sentence_generator.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main_test.executor&quot;: &quot;Run&quot;,
-    &quot;Python.similarity_tests.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_bs.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/chase/DataspellProjects/rnn-timeseries-for-electricity-consumption&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.create_database.executor": "Run",
+    "Python.generate_sentence_en.executor": "Run",
+    "Python.generate_sentence_pl (1).executor": "Run",
+    "Python.generate_sentence_pl.executor": "Run",
+    "Python.generate_sentence_pl_GGUF.executor": "Run",
+    "Python.generate_sentence_pl_GPTQ (1).executor": "Run",
+    "Python.llm_sentence_generator.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.main_test.executor": "Run",
+    "Python.similarity_tests.executor": "Run",
+    "Python.test_bs.executor": "Run",
+    "Python.test_pl_sentences.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/chase/DataspellProjects/rnn-timeseries-for-electricity-consumption",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;sqlite&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "sqlite"
     ]
   }
-}</component>
-  <component name="RunManager" selected="Python.main">
-    <configuration name="create_database" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="multiple-choice-vocab-in-context" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/create_database.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="generate_sentence_pl" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+}]]></component>
+  <component name="RunManager" selected="Python.generate_sentence_pl (1)">
+    <configuration name="generate_sentence_pl (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="multiple-choice-vocab-in-context" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -120,7 +107,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="generate_sentence_pl" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="multiple-choice-vocab-in-context" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -133,7 +120,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\chase\DataspellProjects\multiple-choice-vocab-in-context\generate_sentence_pl.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -142,7 +129,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="main_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="generate_sentence_pl_GPTQ (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="multiple-choice-vocab-in-context" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -155,7 +142,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main_test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/generate_sentence_pl_GPTQ.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -164,7 +151,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="similarity_tests" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="generate_sentence_pl_GPTQ" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="multiple-choice-vocab-in-context" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -177,7 +164,29 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/similarity_tests.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\chase\DataspellProjects\multiple-choice-vocab-in-context\generate_sentence_pl_GPTQ.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_pl_sentences" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="multiple-choice-vocab-in-context" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_pl_sentences.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -188,11 +197,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main" />
-        <item itemvalue="Python.generate_sentence_pl" />
-        <item itemvalue="Python.similarity_tests" />
-        <item itemvalue="Python.create_database" />
-        <item itemvalue="Python.main_test" />
+        <item itemvalue="Python.generate_sentence_pl (1)" />
+        <item itemvalue="Python.generate_sentence_pl_GPTQ (1)" />
+        <item itemvalue="Python.generate_sentence_pl_GPTQ" />
+        <item itemvalue="Python.generate_sentence_pl_GGUF" />
+        <item itemvalue="Python.test_pl_sentences" />
       </list>
     </recent_temporary>
   </component>
@@ -216,10 +225,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="major progress in main.py, in the middle of debugging some stuff but it's REALLY CLOSE to having actual samples of some english multiple choice questions!" />
-    <MESSAGE value="added sentences to WordInfo to keep them nicely paired" />
-    <MESSAGE value="removed unncessary word_index from WordInfo" />
-    <MESSAGE value="it's... functional?? o_o&#10;let's see if we can make it repeatable without rerunning from zero" />
     <MESSAGE value="changed generate to not have quotes because actually it would sometimes add quotes to a weird which was weird and made the model seem awkwardly sarcastic" />
     <MESSAGE value="changed constructor for WordInfo because needed to be able to input lemmas from the getgo" />
     <MESSAGE value="now word choice from db has changed to be more restrictive because now we match form of inputted word as well and hoo boy that was a doozy" />
@@ -241,6 +246,10 @@
     <MESSAGE value="potential solve for the (NV-&gt;J) problem, though in return there is potential for longer runtimes and more sentence regeneration, probably a worthwhile tradeoff" />
     <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;main.py" />
     <MESSAGE value="NV-&gt;J &quot;solve&quot; can cause multi-minute delay in results due to massive number of regenerations. Solutions would require fixing the discrepancy between spaCy and lemminflect's pos identifiers. Might revert the change and have &quot;worse&quot; sentences sometimes as a tradeoff, not sure. Might also just leave it and idk fork lemminflect or expand my database and make my own inflector...&#10;Actually that isn't a bad idea..." />
-    <option name="LAST_COMMIT_MESSAGE" value="NV-&gt;J &quot;solve&quot; can cause multi-minute delay in results due to massive number of regenerations. Solutions would require fixing the discrepancy between spaCy and lemminflect's pos identifiers. Might revert the change and have &quot;worse&quot; sentences sometimes as a tradeoff, not sure. Might also just leave it and idk fork lemminflect or expand my database and make my own inflector...&#10;Actually that isn't a bad idea..." />
+    <MESSAGE value="result.strip() all whitespace, quotes, etc from the beginning and end of a string. Added some alternative test prompts into the eng generator" />
+    <MESSAGE value="the mistral-mixtral thing again x_x" />
+    <MESSAGE value="testing" />
+    <MESSAGE value="changed polish sentence generator to GGUF because it's WAY faster (23s -&gt; 3.6s)" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed polish sentence generator to GGUF because it's WAY faster (23s -&gt; 3.6s)" />
   </component>
 </project>
