@@ -37,7 +37,8 @@ def prompt_model(pipe, human_prompt, t = 120) -> str:
         temperature=0.1, #0.1 is the default, changing it to .5 leads to... German xD
         top_p=0.95,
     )
-    return outputs[0]["generated_text"]
+    result = outputs[0]["generated_text"]
+    return result.strip(' "\'\t\r\n')
 
 def generate_sample_sentence(pipe, word):
     built_prompt = f"Napisz zdanie, w którym pojawia się słowo {word}."

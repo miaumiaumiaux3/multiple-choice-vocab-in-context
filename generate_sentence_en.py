@@ -30,8 +30,12 @@ def prompt_model(llm, human_prompt, t = 120) -> str:
 def generate_sample_sentence(llm, word):
     built_prompt = f"Write a sentence that contains the word {word}."
     #built_prompt = f"Use the word {word} in a sentence."
+    #built_prompt = f"Write a short sentence that includes the word {word}."
+    #built_prompt = f"Write a simple sentence that includes the word {word}."
+    #built_prompt = f"Write a sentence for a 5th grader that includes the word {word}."
+    #prompt3 = f"Write a sentence that begins with the word {word}." #BUGGY, do NOT reccommend
     result = prompt_model(llm, built_prompt)
-    return result
+    return result.strip(' "\'\t\r\n')
 
 #For running as a solo script to play with a model
 if __name__ == "__main__":
