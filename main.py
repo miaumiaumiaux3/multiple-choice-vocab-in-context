@@ -1,5 +1,5 @@
 # pip install -U spacy #to get spacy
-# pip install lemminflect #to get lemmainflect -> eng only (even pyinflect recommends using lemminflect instead)
+# pip install lemminflect #to get lemminflect -> eng only (even pyinflect recommends using lemminflect instead)
 # python -m spacy download en_core_web_md ##md size is minimum that has vectors for words
 # python -m spacy download pl_core_news_md
 
@@ -27,7 +27,8 @@ def flatten(xs):
 def clean_sentence(sentence):
     '''Make lowercase, remove punctuation and split into words'''
     punctuation_without_apostrophe = '.,?!:;()[]{}@#$%^&*<>~-_=+|/"'
-    sentence = sentence.lower().translate(str.maketrans('', '', punctuation_without_apostrophe))
+    sentence = sentence.translate(str.maketrans('', '', punctuation_without_apostrophe))
+    sentence = sentence.lower()
     word_list = sentence.split()
     return word_list
 
@@ -40,23 +41,9 @@ def get_word_info(word, desired_language, cursor):
 
     return result
 
-# #Old version which returned the value instead of setting it in the object, no longer needed
-# def create_inflection_set(lemma) -> set:
-#     '''Get all inflections with lemminflect and return them as a flattened list'''
-#     word_inflections = getAllInflections(lemma, upos=None)
-#     print(word_inflections)
-#     return set(flatten(list(word_inflections.values())))
-
-# def create_inflection_set(word):
-#     '''Get all inflections with lemminflect and return them as a flattened list'''
-#
-#     word_inflections = getAllInflections(word.lemma, upos=None)
-#     print(word_inflections)
-#     inflection_set = set(flatten(list(word_inflections.values())))
-#     word.inflections = inflection_set
 
 def create_inflection_set(word):
-    '''Get all inflections from all lemmas with lemminflect and set them in the object'''
+    '''Get all inflections from all lemmas with lemminflect and set them in the object as a flattened list'''
     all_inflections = []
     for lem in word.lemmas:
         inflections = getAllInflections(lem, upos=None) #returns dict of {pos_tag: (inflection1, inflection2, ...)}
@@ -84,23 +71,18 @@ def find_inflection_in_sentence(word, sentence) -> bool:
         return False
 
 
-# #Currently unused and unneeded, but was in the past so... just in case
-# def get_goal_pos_tag(word, sentence):
-#     '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
-#     doc = language.nlp(sentence)
-#     for token in doc:
-#         if token.text == word.text:
-#             word.goal_pos_tag = token.tag_
-#             return
-
 def set_word_position_and_goal_pos_tag(word, sentence) -> int:
     '''Process sentence with spaCy and get the index of the target word in the sentence, store goal_pos_tag'''
     doc = language.nlp(sentence)
 
+
     for token in doc:
-        #if the token is the target word and not a proper noun
-        # if token.text == word.text and token.pos_ != "PROPN": #old check, generates fewer sentences and usually works fine
-        if token.text == word.text and token.pos_ != "PROPN":
+        #if the token is the target word
+        if token.text.lower() == word.text:
+            #if the word is a proper noun, regenerate the sentence ###BUG: spaCy thinks all nouns (and some verbs) at the beginning of a sentence are proper nouns
+            if token.pos_ == "PROPN":
+                print("Target word is a proper noun, regenerating")
+                return -1
             if token.tag_[0] not in list(word.ppos): #if the word in the sentence is in a form that can be inflected to the target word's pos tag
                 print(f"Cannot make inflection from {token.text}<{word.lemmas[0]}({word.ppos}) to ({token.tag_})")
                 return -1 #regen sentence
@@ -305,12 +287,18 @@ def main():
             #   but spaCy does, so they fight and no one wins
             print("Not enough chosen words, reverting to default top 3 words")
 
-            #First remove chosen words from top_words list:
-            for c in chosen_words:
-                top_words.remove(c)
+            #...doesn't work:  ValueError: list.remove(x): x not in list
+            # #First remove chosen words from top_words list:
+            # for c in chosen_words:
+            #     top_words.remove(c)
+            #
+
             #Then re-add any chosen words to the front, just in case there were valid options
             for c in chosen_words:
                 top_words.insert(0, c)
+
+            #can try list(set(x)) to remove duplicates instead?
+            top_words = list(set(top_words))
 
             # Create new word objects for the top 3 words, intializing them with their text and ppos
             word1 = lang.WordInfo(top_words[0][0], lemmas=top_words[0][2].split(), ppos=top_words[0][1])
@@ -321,8 +309,6 @@ def main():
             word1 = lang.WordInfo(chosen_words[0][0], lemmas=chosen_words[0][1][2].split(), ppos=chosen_words[0][1][1])
             word2 = lang.WordInfo(chosen_words[1][0], lemmas=chosen_words[1][1][2].split(), ppos=chosen_words[1][1][1])
             word3 = lang.WordInfo(chosen_words[2][0], lemmas=chosen_words[2][1][2].split(), ppos=chosen_words[2][1][1])
-
-
 
 
         top3_wordlist = [word1, word2, word3]
@@ -362,6 +348,7 @@ def main():
 
             #capitalize the first letter if the word is the first word in the sentence
             #else it won't be found nor replaced
+            #also if we don't use string.strip() in generate_sentence result, index0 will always be a space
             if w.word_index == 0:
                 replacement_inflection = replacement_inflection.capitalize()
 
@@ -433,6 +420,14 @@ else:
 # Could consider adding vowel checking? Honestly, I don't think it's worth it, but it's a thought
 # Could also consider using spaCy to check if the word before is an article,
 # or just an a/an check?
+
+# "when" problem. Because apparently when is an adverb, but uhh... what... how...
+# it'll never find an appropriate inflection for when so, "infinite" loop.
+
+# Proper Noun problem. SpaCy thinks all words at the beginning of a sentence are proper nouns x_x
+# probably all capitalized nouns too, tbh
+# Also some nouns in the database are honestly proper nouns but not marked as such, so... that's a thing
+# example: "minuteman" leads to an infinite loop because it can't generate a sentence without a proper noun
 
 
 # racoon - raccoon problem (infinite loop because it can never find it because it "corrects" the spelling)
@@ -537,3 +532,9 @@ else:
 # that could also be a way to address spelling weirdness, too, like with raccoon - racoon
 # add inflections of both to both of their entries, make them interchangable
 # we'll see if I have time for that, sounds fun tho ngl
+
+# orrr maybe we can't trust spaCy...
+# Generated sentence with colder:  The temperature dropped significantly, making my fingers feel numb and the air around us noticeably colder.
+# colder with pos: RBR found at index: 17
+# in what way is this an adverb????
+# still managed to generate valid content though which is neat :)
