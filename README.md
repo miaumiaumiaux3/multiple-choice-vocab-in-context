@@ -4,6 +4,7 @@ This project was inspired by my personal desire to learn while playing Literaki/
 
 The best way to learn and understand vocabulary is in context, and in as many different forms as possible. Randomly generated sentences based on a word should be a great way to enforce that a player answering the question is able to recognize when a given word is used correctly, while being fairly quick and minimally obtrusive.
 
+
 ### Program works as follows:
 
 - Run main.py
@@ -18,6 +19,9 @@ The best way to learn and understand vocabulary is in context, and in as many di
 - Ask user the multiple choice vocabulary question
     - _(Not implemented yet)_ inform user if they picked the correct answer
     - *(maybe also showing them what the replaced word was if they get it wrong)*
+ 
+
+(Polish implementation still in progess)
 
 
 ### Sample output:
